@@ -43,7 +43,11 @@ class HONU(nn.Module):
 
     def __repr__(self) -> str:
         """Return a string representation of the HONU model."""
-        return f"HONU(in_features={self.in_features}, polynomial_order={self.order}, bias={self._bias})"
+        myself = (
+            f"HONU(in_features={self.in_features}, polynomial_order={self.order}, "
+            f"bias={self._bias})"
+        )
+        return myself
 
     def _initialize_weights(self) -> Tensor:
         """Initialize weights for the HONU model.
@@ -53,7 +57,7 @@ class HONU(nn.Module):
         is calculated using the formula for combinations with repetition:
             Combinations with repetition = ((n + r - 1)! / (r! * (n - 1)!))
         where:
-            - n is the number of states, calculated as the input length plus 1 if a bias is included.
+            - n is the number of states, calculated as the input length + 1 if a bias is included.
             - r is the polynomial order of the neuron.
 
         Returns:
