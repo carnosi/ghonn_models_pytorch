@@ -2,6 +2,7 @@
 
 __version__ = "0.0.1"
 
+from .honn import HONN
 from .honu import HONU
 
-__all__ = ["HONU"]
+__all__ = ["HONN", "HONU"]

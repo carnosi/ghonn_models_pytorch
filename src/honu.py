@@ -35,10 +35,10 @@ class HONU(nn.Module):
         self._bias = bias
 
         # Initialize weights as trainable parameters
-        self.weights = nn.Parameter(self._initialize_weights())
+        self.weight = nn.Parameter(self._initialize_weights())
 
         # Get all combinations of indices for the polynomial features
-        self._num_combinations = self.weights.size(0)
+        self._num_combinations = self.weight.size(0)
         self.register_buffer("_comb_idx", self._get_combinations())
 
     def __repr__(self) -> str:
@@ -138,7 +138,7 @@ class HONU(nn.Module):
         colx = self._get_colx(x)
 
         # Compute the output by multiplying the feature map with the weights
-        output = torch.matmul(colx, self.weights.view(-1, 1))
+        output = torch.matmul(colx, self.weight.view(-1, 1))
         return output
 
 
