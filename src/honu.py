@@ -12,28 +12,38 @@ __version__ = "0.0.1"
 class HONU(nn.Module):
     """HONU model for polynomial regression."""
 
-    def __init__(self, input_lenght: int, order: int, *, weight_divisor: int = 100, bias=True) -> None:
+    _comb_idx: Tensor
+
+    def __init__(
+        self, in_features: int, polynomial_order: int, *, weight_divisor: int = 100, bias=True
+    ) -> None:
         """Initialize the HONU model.
 
         Args:
-        input_lenght: Length of the input for which the required number of weights is calculated.
-        order: Order of the HONU model, by default 1 = linear
+        in_features: Length of the input for which the required number of weights is calculated.
+        polynomial_order: Order of the HONU model.
         weight_divisor: Divisor for the randomly initialized weights, by default 100
         bias: Whether to include a bias term in the model, by default True
         """
         super().__init__()
-        self._order = order
-        self._input_length = input_lenght
+        # Main model parameters
+        self.order = polynomial_order
+        self.in_features = in_features
+
+        # Optional params
         self._weight_divisor = weight_divisor
         self._bias = bias
 
         # Initialize weights as trainable parameters
-        self._weights = nn.Parameter(self._initialize_weights())
-        self._num_combinations = self._weights.size(0)
+        self.weights = nn.Parameter(self._initialize_weights())
 
         # Get all combinations of indices for the polynomial features
-        comb_idx = self._get_combinations()
-        self.register_buffer("comb_idx", comb_idx)
+        self._num_combinations = self.weights.size(0)
+        self.register_buffer("_comb_idx", self._get_combinations())
+
+    def __repr__(self) -> str:
+        """Return a string representation of the HONU model."""
+        return f"HONU(in_features={self.in_features}, polynomial_order={self.order}, bias={self._bias})"
 
     def _initialize_weights(self) -> Tensor:
         """Initialize weights for the HONU model.
@@ -50,10 +60,10 @@ class HONU(nn.Module):
             Array of initialized weights.
         """
         # Calculate the number of weights needed based on the order and input length
-        n_weights = self._input_length + 1 if self._bias else self._input_length
+        n_weights = self.in_features + 1 if self._bias else self.in_features
         num_weights = int(
-            math.factorial(n_weights + self._order - 1)
-            / (math.factorial(self._order) * math.factorial(n_weights - 1))
+            math.factorial(n_weights + self.order - 1)
+            / (math.factorial(self.order) * math.factorial(n_weights - 1))
         )
         # Initialize weights randomly and scale them
         weights = torch.rand(num_weights) / self._weight_divisor
@@ -71,9 +81,9 @@ class HONU(nn.Module):
             (num_combinations, order).
         """
         # Precompute all index combinations once and store as buffer
-        n_feat = self._input_length + (1 if self._bias else 0)
+        n_feat = self.in_features + (1 if self._bias else 0)
         comb_idx = torch.tensor(
-            list(combinations_with_replacement(range(n_feat), self._order)), dtype=torch.long
+            list(combinations_with_replacement(range(n_feat), self.order)), dtype=torch.long
         )  # shape: (num_combinations, order)
         return comb_idx
 
@@ -85,13 +95,12 @@ class HONU(nn.Module):
         term is prepended before forming combinations.
 
         Args:
-            x (Tensor[B, input_length]):
-                Input batch of shape (batch_size, input_length).
+            x : Input batch of shape (batch_size, input_length).
 
         Returns:
-            Tensor[B, num_combinations]:
-                Tensor of shape (batch_size, num_combinations) where each column
-                is the product of one combination of input features.
+            Tensor[B, num_combinations]: Tensor of shape (batch_size, num_combinations)
+                                        where each column is the product of one
+                                        combination of input features.
         """
         # Add bias column if needed
         if self._bias:
@@ -99,10 +108,10 @@ class HONU(nn.Module):
             x = torch.cat([ones, x], dim=1)  # now x.shape = [B, n_feat]
 
         # x_exp: [B, num_combinations, n_feat]
-        x_exp = x.unsqueeze(1).expand(-1, self.comb_idx.size(0), -1)
+        x_exp = x.unsqueeze(1).expand(-1, self._comb_idx.size(0), -1)
 
         # idx:   [B, num_combinations, order]
-        idx = self.comb_idx.unsqueeze(0).expand(x.size(0), -1, -1)
+        idx = self._comb_idx.unsqueeze(0).expand(x.size(0), -1, -1)
 
         # selected: [B, num_combinations, order]
         selected = x_exp.gather(2, idx)
@@ -113,17 +122,19 @@ class HONU(nn.Module):
         return colx
 
     def forward(self, x: Tensor) -> Tensor:
-        """Forward pass of the HONU model.
+        """Perform the forward pass of the HONU model.
 
         Args:
-            x: Input tensor of shape (batch_size, input_length).
+            x: Input tensor [B, input_length] with the data.
 
         Returns:
-            Tensor: Output tensor of shape (batch_size, 1).
+            Tensor[B, 1]: Output tensor from the model.
         """
+        # Get the polynomial feature map
         colx = self._get_colx(x)
-        # Compute the colX tensor for the input
-        output = torch.matmul(colx, self._weights.view(-1, 1))
+
+        # Compute the output by multiplying the feature map with the weights
+        output = torch.matmul(colx, self.weights.view(-1, 1))
         return output
 
 
