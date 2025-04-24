@@ -8,7 +8,7 @@ All of these models are relatively small with intended use on sequential sensori
 The models rely on eachother and build up hierarchically, where the foundational model is HONU out of which we can build HONN or GHONN.
 
 ## Features
-TBD
+TBD - test vs https://en.wikipedia.org/wiki/Autoregressive_model
 
 ## How to install
 TBD
