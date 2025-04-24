@@ -15,7 +15,12 @@ class HONU(nn.Module):
     _comb_idx: Tensor
 
     def __init__(
-        self, in_features: int, polynomial_order: int, *, weight_divisor: int = 100, bias=True
+        self,
+        in_features: int,
+        polynomial_order: int,
+        *,
+        weight_divisor: int = 100,
+        bias: bool = True,
     ) -> None:
         """Initialize the HONU model.
 
