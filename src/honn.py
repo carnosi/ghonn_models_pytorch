@@ -75,7 +75,7 @@ class HONN(nn.Module):
             "  honu=[",
         ]
         for idx, layer in enumerate(self.honu):
-            lines.append(f"    [{idx}]={repr(layer)},")
+            lines.append(f"    [{idx}]={layer!r},")
         lines += [
             "  ]",
             ")",
@@ -106,7 +106,8 @@ class HONN(nn.Module):
         if self.output_type == "raw":
             return lambda x: x
 
-        raise ValueError(f"Invalid output type: {self.output_type}")
+        msg = f"Invalid output type: {self.output_type}"
+        raise ValueError(msg)
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward pass through the HONN model.
