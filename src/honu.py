@@ -27,12 +27,13 @@ class HONU(nn.Module):
         self._weight_divisor = weight_divisor
         self._bias = bias
 
-        # Initialize weights and bias as trainable parameters
+        # Initialize weights as trainable parameters
         self._weights = nn.Parameter(self._initialize_weights())
-        if self._bias:
-            self._bias_param = nn.Parameter(torch.rand(1) / self._weight_divisor)
-
         self._num_combinations = self._weights.size(0)
+
+        # Get all combinations of indices for the polynomial features
+        comb_idx = self._get_combinations()
+        self.register_buffer("comb_idx", comb_idx)
 
     def _initialize_weights(self) -> Tensor:
         """Initialize weights for the HONU model.
@@ -58,29 +59,56 @@ class HONU(nn.Module):
         weights = torch.rand(num_weights) / self._weight_divisor
         return weights
 
-    def _get_colx(self, x: Tensor) -> Tensor:
-        """Compute the colX tensor for a batch of input tensors.
+    def _get_combinations(self) -> Tensor:
+        """Precompute and return all index combinations for the given input length and order.
 
-        Computes the colX tensor for a batch of input tensors `x` based on a specified polynomial order.
-        This method generates a tensor where each element corresponds to the product of
-        combinations (with replacement) of elements from the input tensor `x`. The number
-        of combinations is determined by the polynomial order `r`.
-
-        Args:
-            x: Input tensor of shape (batch_size, input_length) for which the colX tensor is computed.
+        This method generates combinations with replacement of indices based on the input
+        length and polynomial order. If bias is included, an additional feature is accounted
+        for in the combinations. The resulting combinations are stored as a tensor.
 
         Returns:
-            Tensor: A tensor of shape (batch_size, num_combinations) containing the computed colX values.
+            Tensor: A tensor containing all index combinations with shape
+            (num_combinations, order).
         """
-        batch_size, _ = x.size()
+        # Precompute all index combinations once and store as buffer
+        n_feat = self._input_length + (1 if self._bias else 0)
+        comb_idx = torch.tensor(
+            list(combinations_with_replacement(range(n_feat), self._order)), dtype=torch.long
+        )  # shape: (num_combinations, order)
+        return comb_idx
 
-        # Initialize a tensor to store the results for the entire batch
-        colx = torch.zeros(batch_size, self._num_combinations, device=x.device)
+    def _get_colx(self, x: Tensor) -> Tensor:
+        """Compute polynomial feature map using precomputed index combinations.
 
-        # Generate combinations with replacement and compute the product for each sample in the batch
-        for i in range(batch_size):
-            for pos, com in enumerate(combinations_with_replacement(x[i].tolist(), self._order)):
-                colx[i, pos] = torch.prod(torch.tensor(com, device=x.device))
+        For each sample in the batch, generates all degree-`order` monomials
+        (with replacement) of the input features. If `bias=True`, a constant
+        term is prepended before forming combinations.
+
+        Args:
+            x (Tensor[B, input_length]):
+                Input batch of shape (batch_size, input_length).
+
+        Returns:
+            Tensor[B, num_combinations]:
+                Tensor of shape (batch_size, num_combinations) where each column
+                is the product of one combination of input features.
+        """
+        # Add bias column if needed
+        if self._bias:
+            ones = torch.ones((x.size(0), 1), device=x.device, dtype=x.dtype)
+            x = torch.cat([ones, x], dim=1)  # now x.shape = [B, n_feat]
+
+        # x_exp: [B, num_combinations, n_feat]
+        x_exp = x.unsqueeze(1).expand(-1, self.comb_idx.size(0), -1)
+
+        # idx:   [B, num_combinations, order]
+        idx = self.comb_idx.unsqueeze(0).expand(x.size(0), -1, -1)
+
+        # selected: [B, num_combinations, order]
+        selected = x_exp.gather(2, idx)
+
+        # colx: [B, num_combinations]
+        colx = selected.prod(dim=2)
 
         return colx
 
@@ -96,8 +124,6 @@ class HONU(nn.Module):
         colx = self._get_colx(x)
         # Compute the colX tensor for the input
         output = torch.matmul(colx, self._weights.view(-1, 1))
-        if self._bias:
-            output += self._bias_param
         return output
 
 
