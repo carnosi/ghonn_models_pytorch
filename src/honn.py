@@ -1,12 +1,10 @@
 """Defines the HONN (Higher-Order Neural Network) model architecture."""
 
-from itertools import cycle, islice
-from warnings import warn
-
 import torch
 from torch import Tensor, nn
 
 from .honu import HONU
+from .utils import normalize_list_to_size
 
 __version__ = "0.0.1"
 
@@ -19,7 +17,7 @@ class HONN(nn.Module):
     enabling the model to capture higher-order interactions between input variables.
 
     The model supports flexible configurations, including the number of units, polynomial orders
-    for each layer, and different output transformation types.
+    for each unit, and different output transformation types.
 
     Methods:
         __init__: Initializes the HONN model with the specified parameters.
@@ -31,13 +29,14 @@ class HONN(nn.Module):
                 specified output type.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         in_features: int,
         out_features: int,
         layer_size: int,
         polynomial_orders: list[int],
         *,
+        activations: list[str] | tuple[str] = ("identity",),
         output_type: str = "linear",
         **kwargs,
     ) -> None:
@@ -50,6 +49,8 @@ class HONN(nn.Module):
             polynomial_orders (list[int]): List specifying the polynomial order for each layer.
                 - If the list length is less than `layer_size`, it will be cycled to match the size.
                 - If the list length is greater than `layer_size`, it will be truncated.
+            activations (list[str] | tuple[str], optional): List of activation fnfor each layer.
+                - If the list length is less than `layer_size`, it will be cycled to match the size.
             output_type (str, optional): Type of output transformation. Defaults to "linear".
                 - "sum": Sum the outputs of all layers.
                 - "linear": Apply a linear transformation to the concatenated outputs.
@@ -70,48 +71,55 @@ class HONN(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.layer_size = layer_size
-        self.polynomial_orders = self._assign_polynomial_orders(polynomial_orders)
+        self.polynomial_orders = normalize_list_to_size(
+            self.layer_size, polynomial_orders, description="honus"
+        )
 
         # Optional params
         self.output_type = output_type
         self._validate_setup()
 
+        # Prepare activations
+        # Ensure that even single str value is passed as a list
+        activations = (activations,) if isinstance(activations, str) else activations
+        self.activations = normalize_list_to_size(
+            self.layer_size, activations, description="gate activations"
+        )
+
         # Initialize HONU neurons
         self.honu = nn.ModuleList(
-            [HONU(in_features, order, **kwargs) for order in self.polynomial_orders]
+            [
+                HONU(in_features, order, activation=activation, **kwargs)
+                for order, activation in zip(self.polynomial_orders, self.activations)
+            ]
         )
         # Initialize output head
         self.head = self._get_head()
 
     def __repr__(self) -> str:
         """Return a string representation of the HONN model."""
-        cls = self.__class__.__name__
         # Describe head
         if self.output_type == "sum":
             head_desc = "SummedHonuOutputs"
         elif self.output_type == "linear":
             head_desc = repr(self.head)
-        else:
+        elif self.output_type == "raw":
             head_desc = "RawHonuOutputs"
+        else:
+            head_desc = "UnknownHead"
         # Describe the model
         lines = [
-            f"{cls}(",
+            f"{self.__class__.__name__}(",
             f"  in_features={self.in_features},",
             f"  out_features={self.out_features},",
             f"  layer_size={self.layer_size},",
-            f"  polynomial_orders={self.polynomial_orders},",
             f"  output_type='{self.output_type}',",
             f"  head={head_desc},",
-            "  honu=[",
+            f"  honu={self.honu}",
         ]
-        # Describe each HONU layer
-        for idx, layer in enumerate(self.honu):
-            lines.append(f"    [{idx}]={layer!r},")
-        lines += [
-            "  ]",
-            ")",
-        ]
-        return "\n".join(lines)
+
+        # Describe the model
+        return "\n".join(lines) + "\n" + "  )\n"
 
     def _validate_setup(self) -> None:
         """Validates the configuration of the model to ensure all parameters are correctly set.
@@ -151,49 +159,6 @@ class HONN(nn.Module):
                 "output_type is 'raw'."
             )
             raise ValueError(msg)
-
-    def _assign_polynomial_orders(self, polynomial_orders: list[int]) -> list[int]:
-        """Adjusts the provided list of polynomial orders to match the layer size.
-
-            - If the input list is empty, it defaults to a list of ones with a length
-                equal to `layer_size`.
-            - If the input list length matches `layer_size`, a copy of the list is returned.
-            - If the input list is shorter than `layer_size`, it is cyclically repeated
-                until the desired length is reached.
-            - If the input list is longer than `layer_size`, it is truncated to the
-                desired length.
-
-        Args:
-            polynomial_orders (list[int]): A list of integers representing polynomial orders.
-
-        Returns:
-            list[int]: A list of polynomial orders adjusted to match the layer size.
-
-        Raises:
-            None
-
-        Warnings:
-            - If the input list is empty, a warning is issued, and the default
-                list `[1] * layer_size` is used.
-            - If the input list is longer than `layer_size`, a warning is issued,
-                and the list is truncated.
-        """
-        n = len(polynomial_orders)
-        if n == 0:
-            msg = "Empty polynomial orders list. Defaulting to [1]"
-            warn(msg, stacklevel=2)
-            return [1] * self.layer_size
-        if n == self.layer_size:
-            return polynomial_orders.copy()
-
-        if n < self.layer_size:
-            # Cycle through the original entries until we reach layer_size
-            return list(islice(cycle(polynomial_orders), self.layer_size))
-
-        # If too many orders, just truncate
-        msg = f"Too many polynomial orders ({n}). Truncating to {self.layer_size} orders."
-        warn(msg, stacklevel=2)
-        return polynomial_orders[: self.layer_size]
 
     def _get_head(self) -> callable:
         """Constructs and returns the output head function based on the specified output type.
