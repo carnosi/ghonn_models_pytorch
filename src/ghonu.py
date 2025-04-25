@@ -24,6 +24,7 @@ class GHONU(nn.Module):
         predictor_order: int,
         gate_order: int,
         *,
+        predictor_activation: str = "identity",
         gate_activation: str = "sigmoid",
         weight_divisor: int = 100,
         bias: bool = True,
@@ -34,6 +35,8 @@ class GHONU(nn.Module):
             in_features (int): The number of input features for the model.
             predictor_order (int): The order of the predictor HONU.
             gate_order (int): The order of the gate HONU.
+            predictor_activation (str, optional): The activation function to use for the predictor.
+                Defaults to "identity". Must be a valid function in `torch.nn.functional`.
             gate_activation (str, optional): The activation function to use for the gate.
                 Defaults to "sigmoid". Must be a valid activation function in `torch.nn.functional`.
             weight_divisor (int, optional): A divisor applied to the weights for scaling.
@@ -69,27 +72,25 @@ class GHONU(nn.Module):
             predictor_order,
             weight_divisor=weight_divisor,
             bias=bias,
+            activation=predictor_activation,
         )
-        self.activation_function = getattr(nn.functional, self._gate_activation)
         self.gate = HONU(
             in_features,
             gate_order,
             weight_divisor=weight_divisor,
             bias=bias,
+            activation=self._gate_activation,
         )
 
     def __repr__(self) -> str:
         """Return a string representation of the GHONU model."""
-        act = f"{self.activation_function.__module__}.{self.activation_function.__name__}"
-        myself = (
-            f"{self.__class__.__name__}("
-            f"in_features={self.in_features}, "
-            f"gate_activation={act}, "
-            f")\n"
-            f"predictor: {self.predictor!r}\n"
-            f"gate: {self.gate!r}"
-        )
-        return myself
+        lines = [
+            f"{self.__class__.__name__}(",
+            f"  in_features={self.in_features}, ",
+            f"  predictor={self.predictor!r},",
+            f"  gate={self.gate!r}",
+        ]
+        return "\n".join(lines) + "\n" + ")"
 
     def forward(
         self, x: Tensor, *, return_elements=False
@@ -112,7 +113,7 @@ class GHONU(nn.Module):
         gate_output = self.gate(x)
 
         # Apply the gate to the predictor output
-        output = predictor_output * self.activation_function(gate_output)
+        output = predictor_output * gate_output
         if return_elements:
             return output, predictor_output, gate_output
 
