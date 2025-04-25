@@ -20,7 +20,7 @@ TBD
 TBD
 
 ## Requirements
-The code has been tested with __python==3.12__ and __pytorch==0.2.6__ and the installation requirements are defined in [requirements.txt](requirements.txt).
+The code has been tested with __python==3.12__ and __pytorch==0.2.6__. The installation requirements are defined in [requirements.txt](requirements.txt).
 
 ## Tips & Tricks
 TBD
