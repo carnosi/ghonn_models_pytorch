@@ -14,10 +14,10 @@ class GHONU(nn.Module):
     The gate HONU modulates the output of the predictor HONU using a specified activation function.
 
     Methods:
-        __repr__(): Returns a string representation of the GHONU model.
-        forward(x: Tensor, *, return_elements=False) -> Tensor | tuple[Tensor, Tensor, Tensor]:
-            Performs the forward pass of the GHONU model.
+        __repr__: Returns a string representation of the GHONU model.
+        forward: Performs the forward pass of the GHONU model.
     """
+
     def __init__(  # noqa: PLR0913
         self,
         in_features: int,
