@@ -1,6 +1,5 @@
-"""Module for the GHONU model."""
+"""Defines the GHONU (Gated Higher-Order Neural Unit) model."""
 
-import torch
 from torch import Tensor, nn
 
 from .honu import HONU
@@ -9,11 +8,19 @@ __version__ = "0.0.1"
 
 
 class GHONU(nn.Module):
-    """Model for Gated HONU."""
+    """GHONU (Gated Higher-Order Neural Unit) model.
 
-    def __init__(
+    This model combines two Higher-Order Neural Units (HONUs): a predictor HONU and a gate HONU.
+    The gate HONU modulates the output of the predictor HONU using a specified activation function.
+
+    Methods:
+        __repr__(): Returns a string representation of the GHONU model.
+        forward(x: Tensor, *, return_elements=False) -> Tensor | tuple[Tensor, Tensor, Tensor]:
+            Performs the forward pass of the GHONU model.
+    """
+    def __init__(  # noqa: PLR0913
         self,
-        in_features,
+        in_features: int,
         predictor_order: int,
         gate_order: int,
         *,
@@ -21,7 +28,30 @@ class GHONU(nn.Module):
         weight_divisor: int = 100,
         bias: bool = True,
     ) -> None:
-        """Initialize the GHONU model."""
+        """Initialize the GHONU (Gated Higher-Order Neural Unit) model.
+
+        Args:
+            in_features (int): The number of input features for the model.
+            predictor_order (int): The order of the predictor HONU.
+            gate_order (int): The order of the gate HONU.
+            gate_activation (str, optional): The activation function to use for the gate.
+                Defaults to "sigmoid". Must be a valid activation function in `torch.nn.functional`.
+            weight_divisor (int, optional): A divisor applied to the weights for scaling.
+                Defaults to 100.
+            bias (bool, optional): Whether to include a bias term in the HONUs.
+                Defaults to True.
+
+        Attributes:
+            in_features (int): The number of input features for the model.
+            predictor_order (int): The order of the predictor HONU.
+            gate_order (int): The order of the gate HONU.
+            _weight_divisor (int): The divisor applied to the weights for scaling.
+            _bias (bool): Indicates whether a bias term is included in the HONUs.
+            _gate_activation (str): The activation function used for the gate.
+            predictor (HONU): The predictor HONU instance.
+            activation_function (Callable): The activation function for the gate.
+            gate (HONU): The gate HONU instance.
+        """
         super().__init__()
         # Main model parameters
         self.in_features = in_features
@@ -61,14 +91,30 @@ class GHONU(nn.Module):
         )
         return myself
 
-    def forward(self, x: Tensor) -> Tensor:
-        """Forward pass for the GHONU model."""
+    def forward(
+        self, x: Tensor, *, return_elements=False
+    ) -> Tensor | tuple[Tensor, Tensor, Tensor]:
+        """Perform the forward pass of the GHONU model.
+
+        Args:
+            x (Tensor): Input tensor.
+            return_elements (bool, optional): If True, return the individual
+                outputs of the predictor and gate along with the final output.
+                Defaults to False.
+
+        Returns:
+            Tensor: The final output of the model. If `return_elements` is True,
+            returns a tuple containing the final output, predictor output, and
+            gate output.
+        """
         # Get the outputs of the predictor and gate HONUs
         predictor_output = self.predictor(x)
         gate_output = self.gate(x)
 
         # Apply the gate to the predictor output
         output = predictor_output * self.activation_function(gate_output)
+        if return_elements:
+            return output, predictor_output, gate_output
 
         return output
 

@@ -1,4 +1,4 @@
-"""Module for the HONN model."""
+"""Defines the HONN (Higher-Order Neural Network) model architecture."""
 
 from itertools import cycle, islice
 from warnings import warn
@@ -12,7 +12,24 @@ __version__ = "0.0.1"
 
 
 class HONN(nn.Module):
-    """Model for network out of HONU."""
+    """Higher-Order Neural Network (HONN) model.
+
+    This class implements a neural network composed of multiple HONU (Higher-Order Neuron Unit)
+    in a single layer. Each unit applies a polynomial transformation to the input features,
+    enabling the model to capture higher-order interactions between input variables.
+
+    The model supports flexible configurations, including the number of units, polynomial orders
+    for each layer, and different output transformation types.
+
+    Methods:
+        __init__: Initializes the HONN model with the specified parameters.
+        __repr__: Returns a string representation of the HONN model.
+        forward: Performs a forward pass through the HONN model.
+        _assign_polynomial_orders: Adjusts the polynomial orders list to match
+                the number of layers.
+        _get_head: Constructs and returns the output head function based on the
+                specified output type.
+    """
 
     def __init__(
         self,
@@ -21,21 +38,32 @@ class HONN(nn.Module):
         layer_size: int,
         polynomial_orders: list[int],
         *,
-        output_type: str = "sum",
+        output_type: str = "linear",
         **kwargs,
     ) -> None:
-        """Initialize the HONN model.
+        """Initialize the Higher-Order Neural Network model.
 
         Args:
             in_features (int): Number of input features for the model.
             out_features (int): Number of output features for the model.
-            layer_size (int): Number of neurons in each layer.
+            layer_size (int): Number of HONU layers in the model.
             polynomial_orders (list[int]): List specifying the polynomial order for each layer.
-            output_type (str): Type of output. Can be "sum", "linear" or "raw.
-                    - "sum": Sum the outputs of all units (default).
-                    - "linear": Apply a linear transformation to the concatenated outputs.
-                    - "raw": Return the raw outputs of all units without any transformation.
-            **kwargs: Additional keyword arguments passed to the HONUs.
+                - If the list length is less than `layer_size`, it will be cycled to match the size.
+                - If the list length is greater than `layer_size`, it will be truncated.
+            output_type (str, optional): Type of output transformation. Defaults to "linear".
+                - "sum": Sum the outputs of all layers.
+                - "linear": Apply a linear transformation to the concatenated outputs.
+                - "raw": Return the raw outputs of all layers without any transformation.
+            **kwargs: Additional keyword arguments passed to each HONU layer.
+
+        Attributes:
+            in_features (int): Number of input features for the model.
+            out_features (int): Number of output features for the model.
+            layer_size (int): Number of HONU in the model layer.
+            polynomial_orders (list[int]): List of polynomial orders for each layer.
+            output_type (str): Type of output transformation.
+            honu (nn.ModuleList): List of HONU neurons in the model.
+            head (callable): Output head function or module for processing the model's output.
         """
         super().__init__()
         # Main model parameters
@@ -46,24 +74,26 @@ class HONN(nn.Module):
 
         # Optional params
         self.output_type = output_type
+        self._validate_setup()
 
-        # Initialize honu neurons
+        # Initialize HONU neurons
         self.honu = nn.ModuleList(
             [HONU(in_features, order, **kwargs) for order in self.polynomial_orders]
         )
-        # Initialize output
+        # Initialize output head
         self.head = self._get_head()
 
     def __repr__(self) -> str:
         """Return a string representation of the HONN model."""
         cls = self.__class__.__name__
-        # describe head
+        # Describe head
         if self.output_type == "sum":
             head_desc = "SummedHonuOutputs"
         elif self.output_type == "linear":
             head_desc = repr(self.head)
-        else:  # raw
+        else:
             head_desc = "RawHonuOutputs"
+        # Describe the model
         lines = [
             f"{cls}(",
             f"  in_features={self.in_features},",
@@ -74,6 +104,7 @@ class HONN(nn.Module):
             f"  head={head_desc},",
             "  honu=[",
         ]
+        # Describe each HONU layer
         for idx, layer in enumerate(self.honu):
             lines.append(f"    [{idx}]={layer!r},")
         lines += [
@@ -82,23 +113,104 @@ class HONN(nn.Module):
         ]
         return "\n".join(lines)
 
+    def _validate_setup(self) -> None:
+        """Validates the configuration of the model to ensure all parameters are correctly set.
+
+        This method checks the following conditions:
+            - The `output_type` must be one of the supported types: "sum", "linear", or "raw".
+            - The `layer_size` must be greater than 0.
+            - The `out_features` must be greater than 0.
+            - If `output_type` is "sum", `out_features` must be exactly 1.
+            - If `output_type` is "raw", `out_features` must match the value of `layer_size`.
+
+        Raises:
+            ValueError: If any of the above conditions are not met.
+        """
+        supported_output_types = ["sum", "linear", "raw"]
+        if self.output_type not in supported_output_types:
+            msg = (
+                f"Invalid output type: {self.output_type}. Must be one of {supported_output_types}."
+            )
+            raise ValueError(msg)
+
+        if self.layer_size <= 0:
+            msg = f"Invalid layer_size: {self.layer_size}. Must be > 0."
+            raise ValueError(msg)
+
+        if self.out_features <= 0:
+            msg = f"Invalid out_features: {self.out_features}. Must be > 0."
+            raise ValueError(msg)
+
+        if self.output_type == "sum" and self.out_features != 1:
+            msg = f"Invalid out_features: {self.out_features}. Must be 1 when output_type is 'sum'."
+            raise ValueError(msg)
+
+        if self.output_type == "raw" and self.out_features != self.layer_size:
+            msg = (
+                f"Invalid out_features: {self.out_features}. Must be {self.layer_size} when "
+                "output_type is 'raw'."
+            )
+            raise ValueError(msg)
+
     def _assign_polynomial_orders(self, polynomial_orders: list[int]) -> list[int]:
-        """Inflate or truncate the provided polynomial orders list so its length == layer_size."""
+        """Adjusts the provided list of polynomial orders to match the layer size.
+
+            - If the input list is empty, it defaults to a list of ones with a length
+                equal to `layer_size`.
+            - If the input list length matches `layer_size`, a copy of the list is returned.
+            - If the input list is shorter than `layer_size`, it is cyclically repeated
+                until the desired length is reached.
+            - If the input list is longer than `layer_size`, it is truncated to the
+                desired length.
+
+        Args:
+            polynomial_orders (list[int]): A list of integers representing polynomial orders.
+
+        Returns:
+            list[int]: A list of polynomial orders adjusted to match the layer size.
+
+        Raises:
+            None
+
+        Warnings:
+            - If the input list is empty, a warning is issued, and the default
+                list `[1] * layer_size` is used.
+            - If the input list is longer than `layer_size`, a warning is issued,
+                and the list is truncated.
+        """
         n = len(polynomial_orders)
+        if n == 0:
+            msg = "Empty polynomial orders list. Defaulting to [1]"
+            warn(msg, stacklevel=2)
+            return [1] * self.layer_size
         if n == self.layer_size:
             return polynomial_orders.copy()
+
         if n < self.layer_size:
-            # cycle through the original entries until we reach layer_size
+            # Cycle through the original entries until we reach layer_size
             return list(islice(cycle(polynomial_orders), self.layer_size))
-        # if too many orders, just truncate
-        warn(
-            f"Too many polynomial orders ({n}). Truncating to {self.layer_size} orders.",
-            stacklevel=2,
-        )
+
+        # If too many orders, just truncate
+        msg = f"Too many polynomial orders ({n}). Truncating to {self.layer_size} orders."
+        warn(msg, stacklevel=2)
         return polynomial_orders[: self.layer_size]
 
     def _get_head(self) -> callable:
-        """Get the output head based on the specified output type."""
+        """Constructs and returns the output head function based on the specified output type.
+
+        Supported `output_type` values:
+            - "sum": Returns a lambda function that computes the sum of the input tensor
+                    along the last dimension.
+            - "linear": Returns a fully connected layer (`nn.Linear`) with `layer_size`
+                    input features and `out_features` output features.
+            - "raw": Returns a lambda function that outputs the input tensor unchanged.
+
+        Returns:
+            callable: A function or module that processes the output of the model.
+
+        Raises:
+            ValueError: If the specified `output_type` is not one of the supported types.
+        """
         if self.output_type == "sum":
             return lambda x: x.sum(dim=-1)
         if self.output_type == "linear":
@@ -109,14 +221,18 @@ class HONN(nn.Module):
         msg = f"Invalid output type: {self.output_type}"
         raise ValueError(msg)
 
-    def forward(self, x: Tensor) -> Tensor:
-        """Forward pass through the HONN model.
+    def forward(self, x: Tensor) -> Tensor | tuple[Tensor, ...]:
+        """Perform a forward pass through the HONN model.
 
         Args:
-            x: Input tensor of shape (batch_size, in_features).
+            x (Tensor): Input tensor of shape (batch_size, in_features).
 
         Returns:
-            Output tensor of shape (batch_size, out_features).
+            Tensor: Output tensor of shape (batch_size, out_features). The shape depends on the
+            specified output_type:
+                - "sum": (batch_size, out_features), where outputs are summed across layers.
+                - "linear": (batch_size, out_features), where a linear transformation is applied.
+                - "raw": (batch_size, layer_size * out_features), where raw outputs are returned.
         """
         output = torch.stack([self.honu[i](x) for i in range(self.layer_size)], dim=-1)
 

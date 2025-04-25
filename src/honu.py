@@ -1,4 +1,4 @@
-"""Module for the HONU model."""
+"""Defines the Higher-Order Neural Units (HONU) model."""
 
 import math
 from itertools import combinations_with_replacement
@@ -10,7 +10,21 @@ __version__ = "0.0.1"
 
 
 class HONU(nn.Module):
-    """HONU model for polynomial regression."""
+    """Higher-Order Neural Units (HONU) model for polynomial regression.
+
+    This model computes polynomial feature combinations of the input data and
+    applies trainable weights to produce the output. It supports configurable
+    polynomial orders and optional bias terms.
+
+    Methods:
+        __init__: Initializes the HONU model with the specified parameters.
+        __repr__: Returns a string representation of the HONU model.
+        forward: Performs a forward pass through the HONU model.
+        _validate_setup: Validates the configuration of the model.
+        _initialize_weights: Initializes the trainable weights of the model.
+        _get_combinations: Precomputes index combinations for polynomial features.
+        _get_colx: Computes the polynomial feature map for the input batch.
+    """
 
     _comb_idx: Tensor
 
@@ -22,13 +36,24 @@ class HONU(nn.Module):
         weight_divisor: int = 100,
         bias: bool = True,
     ) -> None:
-        """Initialize the HONU model.
+        """Initialize the Higher-Order Neural Units model.
 
         Args:
-        in_features: Length of the input for which the required number of weights is calculated.
-        polynomial_order: Order of the HONU model.
-        weight_divisor: Divisor for the randomly initialized weights, by default 100
-        bias: Whether to include a bias term in the model, by default True
+            in_features (int): Length of the input for which the required number of weights
+                                is calculated.
+            polynomial_order (int): Order of the HONU model.
+            weight_divisor (int, optional): Divisor for the randomly initialized weights,
+                                by default 100.
+            bias (bool, optional): Whether to include a bias term in the model, by default True.
+
+        Attributes:
+            order (int): Polynomial order of the model.
+            in_features (int): Number of input features.
+            _weight_divisor (int): Divisor used to scale the randomly initialized weights.
+            _bias (bool): Indicates whether a bias term is included in the model.
+            weight (nn.Parameter): Trainable weights of the model.
+            _num_combinations (int): Number of polynomial feature combinations.
+            _comb_idx (Tensor): Precomputed index combinations for polynomial features.
         """
         super().__init__()
         # Main model parameters
@@ -38,6 +63,7 @@ class HONU(nn.Module):
         # Optional params
         self._weight_divisor = weight_divisor
         self._bias = bias
+        self._validate_setup()
 
         # Initialize weights as trainable parameters
         self.weight = nn.Parameter(self._initialize_weights())
@@ -53,6 +79,27 @@ class HONU(nn.Module):
             f"bias={self._bias})"
         )
         return myself
+
+    def _validate_setup(self) -> None:
+        """Validates the configuration of the model to ensure all parameters are correctly set.
+
+        This method checks the following conditions:
+            - The `polynomial_order` must be greater than 0.
+            - The `in_features` must be greater than 0.
+            - The `weight_divisor` must be greater than 0.
+
+        Raises:
+            ValueError: If any of the above conditions are not met.
+        """
+        if self.order <= 0:
+            msg = f"Polynomial order must be greater than 0. Got {self.order}."
+            raise ValueError(msg)
+        if self.in_features <= 0:
+            msg = f"Input length must be greater than 0. Got {self.in_features}."
+            raise ValueError(msg)
+        if self._weight_divisor <= 0:
+            msg = f"Weight divisor must be greater than 0. Got {self._weight_divisor}."
+            raise ValueError(msg)
 
     def _initialize_weights(self) -> Tensor:
         """Initialize weights for the HONU model.
