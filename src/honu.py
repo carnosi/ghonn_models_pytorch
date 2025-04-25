@@ -35,6 +35,7 @@ class HONU(nn.Module):
         *,
         weight_divisor: int = 100,
         bias: bool = True,
+        activation: str = "identity",
     ) -> None:
         """Initialize the Higher-Order Neural Units model.
 
@@ -45,6 +46,7 @@ class HONU(nn.Module):
             weight_divisor (int, optional): Divisor for the randomly initialized weights,
                                 by default 100.
             bias (bool, optional): Whether to include a bias term in the model, by default True.
+            activation (str, optional): Activation function to be used, by default "identity".
 
         Attributes:
             order (int): Polynomial order of the model.
@@ -63,6 +65,11 @@ class HONU(nn.Module):
         # Optional params
         self._weight_divisor = weight_divisor
         self._bias = bias
+        self._activation = activation
+        if self._activation in ["identity", "linear"]:
+            self._activation_function = lambda x: x
+        else:
+            self._activation_function = getattr(torch.nn.functional, self._activation)
         self._validate_setup()
 
         # Initialize weights as trainable parameters
@@ -76,7 +83,7 @@ class HONU(nn.Module):
         """Return a string representation of the HONU model."""
         myself = (
             f"HONU(in_features={self.in_features}, polynomial_order={self.order}, "
-            f"bias={self._bias})"
+            f"bias={self._bias}, activation={self._activation})"
         )
         return myself
 
@@ -190,7 +197,7 @@ class HONU(nn.Module):
         colx = self._get_colx(x)
 
         # Compute the output by multiplying the feature map with the weights
-        output = torch.matmul(colx, self.weight.view(-1, 1))
+        output = self._activation_function(torch.matmul(colx, self.weight.view(-1, 1)))
         return output
 
 
