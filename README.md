@@ -38,7 +38,7 @@ pip install -r requirements.txt
 **Neuron Types** ⚡
 - **HONU:** The fundamental building block for higher-order modeling. For example, a 2nd order HONU is defined as:
 
-  ![HONU equation](https://latex.codecogs.com/png.image?\dpi{120} \tilde{y}(k)=\sum_{i=0}^{n}\sum_{j=i}^{n}w_{i,j}x_ix_j=\mathbf{w}\cdot\mathrm{col}^{r=2}(\mathbf{x}))
+  ![HONU equation](https://latex.codecogs.com/png.image?\dpi{120}\bg_white\tilde{y}(k)=\sum_{i=0}^{n}\sum_{j=i}^{n}w_{i,j}x_ix_j=\mathbf{w}\cdot\mathrm{col}^{r=2}(\mathbf{x}))
 
   where:
   - $\tilde{y}(k)$ is the neuron output for input sample $k$
