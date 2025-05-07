@@ -65,6 +65,7 @@ class GHONU(nn.Module):
         self._weight_divisor = weight_divisor
         self._bias = bias
         self._gate_activation = gate_activation
+        self._predictor_activation = predictor_activation
 
         # Initialize predictor and gate HONUs
         self.predictor = HONU(
@@ -72,7 +73,7 @@ class GHONU(nn.Module):
             predictor_order,
             weight_divisor=weight_divisor,
             bias=bias,
-            activation=predictor_activation,
+            activation=self._predictor_activation,
         )
         self.gate = HONU(
             in_features,

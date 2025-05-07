@@ -83,7 +83,7 @@ class HONN(nn.Module):
         # Ensure that even single str value is passed as a list
         activations = (activations,) if isinstance(activations, str) else activations
         self.activations = normalize_list_to_size(
-            self.layer_size, activations, description="gate activations"
+            self.layer_size, activations, description="neuron activations"
         )
 
         # Initialize HONU neurons
