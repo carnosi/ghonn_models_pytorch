@@ -31,6 +31,8 @@ dynamic = ["version"]
 [project.optional-dependencies]
 docs= [
     "sphinx",
+    "autodocsumm",
+    "sphinx-book-theme",
 ]
 dev = [
     "ruff>=0.11",

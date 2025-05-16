@@ -75,7 +75,7 @@ Visit [Read The Docs Project Page](https://ghonn.readthedocs.io/) or read the fo
 * In the case of GHONU based units it is often benefitial to have different initial learning rate between the two neurons.
 * more TBD
 
-## 🛠️ Requirements & Installation <a name="installation"></a>
+## 🛠️ Installation <a name="installation"></a>
 
 **PyPI version:**
 ```bash
