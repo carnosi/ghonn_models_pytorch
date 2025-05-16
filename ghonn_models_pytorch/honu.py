@@ -46,10 +46,9 @@ class HONU(nn.Module):
             polynomial_order (int): Order of the HONU model.
             activation (str, optional): Activation function to be used, by default "identity".
             **kwargs: Additional keyword arguments:
-                - weight_divisor (int or float, optional): Divisor for the randomly
-                    initialized weights, by default 100.0.
-                - bias (bool, optional): Whether to include a bias term in the model,
-                    by default True.
+
+                weight_divisor (int or float, optional): Divisor for the randomly initialized weights, by default 100.0.
+                bias (bool, optional): Whether to include a bias term in the model, by default True.
 
         Attributes:
             order (int): Polynomial order of the model.
@@ -68,7 +67,9 @@ class HONU(nn.Module):
         # Optional params
         weight_divisor = kwargs.get("weight_divisor", 100.0)
         if not isinstance(weight_divisor, (int, float, str)):
-            msg = f"weight_divisor must be a number or string, got {type(weight_divisor)}"
+            msg = (
+                f"weight_divisor must be a number or string, got {type(weight_divisor)}"
+            )
             raise TypeError(msg)
         self._weight_divisor = float(weight_divisor)
         self._bias = kwargs.get("bias", True)
@@ -151,7 +152,8 @@ class HONU(nn.Module):
         # Precompute all index combinations once and store as buffer
         n_feat = self.in_features + (1 if self._bias else 0)
         return torch.tensor(
-            list(combinations_with_replacement(range(n_feat), self.order)), dtype=torch.long
+            list(combinations_with_replacement(range(n_feat), self.order)),
+            dtype=torch.long,
         )  # shape: (num_combinations, order)
 
     def _get_colx(self, x: Tensor) -> Tensor:
