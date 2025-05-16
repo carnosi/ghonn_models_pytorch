@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://i.ibb.co/W4jthZ7R/GHONN-models-logo.png" alt="logo" width="50%" />
+<img src="https://i.ibb.co/4nT0x4HL/GHONN-models-logo.png" alt="logo" width="50%" />
 
 **Python library with polynomial neural networks**
 
@@ -12,8 +12,7 @@
 
 </div>
 
-## Introduction
-**GHONN Models Pytorch** brings advanced neural architectures to your PyTorch projects: Higher Order Neural Units (HONU), Higher Order Neural Networks (HONN), Gated Higher Order Neural Units (gHONU), and Gated Higher Order Neural Networks (gHONN).
+**GHONN Models Pytorch** brings advanced neural architectures to your PyTorch projects: Higher Order Neural Units (HONU), Higher Order Neural Networks (HONN), Gated Higher Order Neural Units (GHONU), and Gated Higher Order Neural Networks (GHONN).
 
 ✨ **Polynomial neurons at the core:** These models excel at capturing complex, nonlinear relationships—especially when working with polynomial signals. Their adaptable design makes them a strong choice for a wide range of machine learning tasks.
 
@@ -23,38 +22,18 @@
 
 👉 **Curious how it works in practice?** Check out the example notebooks and usage guides included in this repository.
 
-## Requirements & Installation
+## 📖 [Project Documentation](https://ghonn.readthedocs.io/) 📖
+Visit [Read The Docs Project Page](https://ghonn.readthedocs.io/) or read the following README to know more about Gated Higher Order Neural Network Models Pytorch (GHONN for short) library.
 
-- **Python:** 3.12 or newer
-- **PyTorch:** 2.7.0 or newer
+## ✨ Features <a name="features"></a>
 
-To install the package (once released on PyPI), use your preferred package manager:
-
-**With pip:**
-```bash
-pip install ghonn-models-pytorch
-```
-
-**With uv:**
-```bash
-uv pip install ghonn-models-pytorch
-```
-
-Or, to install from source:
-
-
-```bash
-git clone https://github.com/carnosi/ghonn_models_pytorch.git
-cd ghonn_models_pytorch
-pip install .
-```
-Or, with **[uv](https://github.com/astral-sh/uv)**:
-
-```bash
-uv pip install .
-```
-
-## Features
+- **Polynomial neurons:** Capture complex, nonlinear relationships using higher-order neural units.
+- **Gated architectures:** Leverage dual-neuron setups for richer modeling capacity.
+- **Modular design:** Easily stack and combine layers for custom architectures.
+- **Efficient computation:** Optimized for high-order polynomial calculations, even on CPUs.
+- **Seamless PyTorch integration:** All components are standard PyTorch modules.
+- **Supports regression & classification:** Flexible for a wide range of ML tasks.
+- **Ready-to-use examples:** Example notebooks and guides included.
 
 **Neuron Types** ⚡
 - **HONU:** The fundamental building block for higher-order modeling. For example, a 2nd order HONU is defined as:
@@ -76,14 +55,14 @@ uv pip install .
 - **HONN:** Single-layer networks of HONU neurons. Supports both raw outputs for stacking and linear heads for custom output dimensions.
 - **gHONN:** Single-layer networks of gHONU neurons, with the same flexible output options as HONN.
 
-**Key Advantages** 🚀
-- **Efficient high-order computation:** Redesigned polynomial order assignment enables fast calculations even at high polynomial orders (up to 10th order and beyond) even on CPUs.
-- **Seamless PyTorch integration:** All components are implemented as standard PyTorch modules for easy use in your projects.
-- **Customizable & modular:** Layers and neurons can be stacked, combined, or adapted to suit a wide range of architectures and tasks.
-- **Supports regression & classification:** Suitable for both regression and classification problems.
-- **Ready-to-use examples:** Example notebooks and usage guides are included in this repo to help you get started quickly.
+**Why Choose GHONN Models?** 🚀
+- **Efficient high-order computation:** Optimized for fast polynomial calculations, even at high orders and on CPUs.
+- **Flexible & modular:** Easily stack, combine, or adapt layers and neurons for custom architectures.
+- **PyTorch-native:** All components are standard PyTorch modules for seamless integration.
+- **Versatile:** Supports both regression and classification tasks.
+- **Quick start:** Example notebooks and guides included to help you get going fast.
 
-## Examples & Usage
+## 🧪 Examples & Usage <a name="examples"></a>
 
 - Explore step-by-step Jupyter notebooks in the [examples](./examples/) folder for practical demonstrations and implementation tips.
 - Example usage patterns and code snippets will be added soon.
@@ -92,12 +71,23 @@ uv pip install .
 # Example usage coming soon!
 ```
 
-## Tips & Tricks
+## 💡 Tips & Tricks <a name="tips_n_tricks"></a>
 * In the case of GHONU based units it is often benefitial to have different initial learning rate between the two neurons.
 * more TBD
 
+## 🛠️ Requirements & Installation <a name="installation"></a>
 
-## References
+**PyPI version:**
+```bash
+pip install ghonn-models-pytorch
+```
+
+**The latest version from GitHub:**
+```bash
+pip install git+https://github.com/carnosi/ghonn_models_pytorch
+```
+
+## 📚 References <a name="references"></a>
 This repository is inspired by the foundational research presented in the following papers. While the original studies utilized legacy implementations, this PyTorch-based version offers a more user-friendly and computationally efficient alternative, maintaining the same core objectives and functionality.
 
 **HONU**:
@@ -115,7 +105,11 @@ This repository is inspired by the foundational research presented in the follow
 [1] O. Budik, I. Bukovsky, and N. Homma, “Potentials of Gated Higher Order Neural Units for Signal Decomposition and Process Monitoring,” Procedia Computer Science, vol. 253, pp. 2278–2287, Jan. 2025, doi: 10.1016/j.procs.2025.01.288.
 ```
 
-## How To Cite
+### Our other project
+
+**[AISLEX](https://github.com/carnosi/AISLEX)**: A Python package for Approximate Individual Sample Learning Entropy (LE) anomaly detection. Easily integrate LE-based novelty detection into your neural network workflows, with both Python and JAX implementations.
+
+## 📝 How To Cite <a name="how_to_cite"></a>
 If `ghonn_models_pytorch` has been useful in your research or work, please consider citing our article:
 
 ```plaintext
@@ -126,4 +120,6 @@ BibText:
 ```bibtex
 Work in progress. Use GHONU (10.1016/j.procs.2025.01.288) for now please.
 ```
+## 📄 License <a name="lisence"></a>
 
+This project is licensed under the terms of the [MIT License](https://github.com/carnosi/ghonn_models_pytorch/blob/main/LICENSE).
