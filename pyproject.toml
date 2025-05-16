@@ -62,7 +62,7 @@ select = ["ALL"]
 ignore = [
     "COM812",
     "ISC001",
-    "E402"
+    "E402",
     "T201",
 ]
 [tool.ruff.per-file-ignores]
