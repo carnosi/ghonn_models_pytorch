@@ -64,11 +64,61 @@ Visit [Read The Docs Project Page](https://ghonn.readthedocs.io/) or read the fo
 
 ## 🧪 Examples & Usage <a name="examples"></a>
 
-- Explore step-by-step Jupyter notebooks in the [examples](./examples/) folder for practical demonstrations and implementation tips.
-- Example usage patterns and code snippets will be added soon.
+You can find helpful, step-by-step Jupyter notebooks in the [examples](./examples/) folder, which offer practical demonstrations and implementation suggestions.
 
+You may also find the code snippets below useful as a starting point.
+
+**HONU initialization**
 ```python
-# Example usage coming soon!
+import ghonn_models_pytorch as gmp
+
+kwargs = {
+    "weight_divisor": 100,  # Divides weights to help with numerical stability
+    "bias": True            # Whether to use a bias term in the model
+}
+
+# Create a Higher Order Neural Unit (HONU) with 3 inputs and degree 2
+honu_neuron = gmp.HONU(
+    in_features=3,          # Number of input features
+    order=2,                # Degree of the polynomial
+    activation="identity",  # Activation function
+    **kwargs
+)
+```
+
+**HONN initialization**
+```python
+import ghonn_models_pytorch as gmp
+
+kwargs = {
+    "weight_divisor": 100,
+    "bias": True
+}
+
+# Create single HONU based layer - HONN with 4 neurons of different orders and activation functions.
+honn_layer = gmp.HONN(
+    input_shape=3,                          # Number of input features
+    output_shape=2,                         # Number of output features
+    layer_size=4,                           # Number of neurons in the layer
+    orders=(2, 3)                           # Degree of the polynomials in the layer. If shorter than layer size it works as rolling buffer
+    activations=("identity", "sigmoid"),    # Activation functions for the neurons in the layer. If shorter work like a rolling buffer
+    output_type="linear",                   # Output type of the layer. Can be "linear" or "sum" or "raw"
+    **kwargs
+)
+```
+**Neuron, Layer or Model training as usual**
+```python
+for i in range(0, data.size(0), batch_size):
+    # Get the batch
+    batch = data[i:i+batch_size]
+    # Forward pass
+    output = honn_layer(batch)
+    # Compute loss
+    loss = criterion(output, target)
+    # Backward pass
+    loss.backward()
+    # Update weights
+    optimizer.step()
 ```
 
 ## 💡 Tips & Tricks <a name="tips_n_tricks"></a>
