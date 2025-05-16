@@ -47,7 +47,8 @@ class HONU(nn.Module):
             activation (str, optional): Activation function to be used, by default "identity".
             **kwargs: Additional keyword arguments:
 
-                weight_divisor (int or float, optional): Divisor for the randomly initialized weights, by default 100.0.
+                weight_divisor (int or float, optional): Divisor for the randomly initialized
+                    weights, by default 100.0.
                 bias (bool, optional): Whether to include a bias term in the model, by default True.
 
         Attributes:
@@ -67,9 +68,7 @@ class HONU(nn.Module):
         # Optional params
         weight_divisor = kwargs.get("weight_divisor", 100.0)
         if not isinstance(weight_divisor, (int, float, str)):
-            msg = (
-                f"weight_divisor must be a number or string, got {type(weight_divisor)}"
-            )
+            msg = f"weight_divisor must be a number or string, got {type(weight_divisor)}"
             raise TypeError(msg)
         self._weight_divisor = float(weight_divisor)
         self._bias = kwargs.get("bias", True)
