@@ -1,5 +1,9 @@
 """Defines the HONN (Higher-Order Neural Network) model architecture."""
 
+from __future__ import annotations
+
+from typing import Any, Callable
+
 import torch
 from torch import Tensor, nn
 
@@ -36,9 +40,9 @@ class HONN(nn.Module):
         layer_size: int,
         polynomial_orders: list[int],
         *,
-        activations: list[str] | tuple[str] = ("identity",),
+        activations: list[str] | tuple[str] | str = "identity",
         output_type: str = "linear",
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> None:
         """Initialize the Higher-Order Neural Network model.
 
@@ -85,6 +89,7 @@ class HONN(nn.Module):
         self.activations = normalize_list_to_size(
             self.layer_size, activations, description="neuron activations"
         )
+        # Extract relevant kwargs
 
         # Initialize HONU neurons
         self.honu = nn.ModuleList(
@@ -160,7 +165,7 @@ class HONN(nn.Module):
             )
             raise ValueError(msg)
 
-    def _get_head(self) -> callable:
+    def _get_head(self) -> Callable:
         """Constructs and returns the output head function based on the specified output type.
 
         Supported `output_type` values:

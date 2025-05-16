@@ -1,5 +1,9 @@
 """Defines the GHONN (Gated Higher Order Neural Network) model architecture."""
 
+from __future__ import annotations
+
+from typing import Any, Callable
+
 import torch
 from torch import Tensor, nn
 
@@ -29,10 +33,10 @@ class GHONN(nn.Module):
         predictor_orders: list[int],
         gate_orders: list[int],
         *,
-        predictor_activations: list[str] | tuple[str] = ("identity"),
-        gate_activations: list[str] | tuple[str] = ("sigmoid"),
+        predictor_activations: list[str] | tuple[str] | str = "identity",
+        gate_activations: list[str] | tuple[str] | str = "sigmoid",
         output_type: str = "linear",
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> None:
         """Initialize the Gater Higher Order Neural Network model.
 
@@ -92,7 +96,14 @@ class GHONN(nn.Module):
         # Initialize the GHONUs
         self.ghonus = nn.ModuleList(
             [
-                GHONU(in_features, p, g, predictor_activation=pa, gate_activation=ga, **kwargs)
+                GHONU(
+                    in_features,
+                    p,
+                    g,
+                    predictor_activation=pa,
+                    gate_activation=ga,
+                    **kwargs,
+                )
                 for p, g, pa, ga in zip(
                     self.predictor_orders,
                     self.gate_orders,
@@ -189,7 +200,7 @@ class GHONN(nn.Module):
             )
             raise ValueError(msg)
 
-    def _get_head(self) -> callable:
+    def _get_head(self) -> Callable:
         """Constructs and returns the output head function based on the specified output type.
 
         Supported `output_type` values:
@@ -216,7 +227,7 @@ class GHONN(nn.Module):
         raise ValueError(msg)
 
     def forward(
-        self, x: Tensor, *, return_elements=False
+        self, x: Tensor, *, return_elements: bool = False
     ) -> Tensor | tuple[Tensor, tuple[Tensor, Tensor]]:
         """Perform the forward pass of the GHONN model.
 
@@ -231,12 +242,9 @@ class GHONN(nn.Module):
             tuple: (output, (predictor_outputs, gate_outputs)) if return_elements is True.
         """
         if return_elements:
-            outs = [ghonu(x, return_elements=True) for ghonu in self.ghonus]
-            # outs: List of (output, predictor_output, gate_output)
-            outputs, predictor_outputs, gate_outputs = zip(*outs)
-            outputs = torch.stack(outputs, dim=-1)
-            predictor_outputs = torch.stack(predictor_outputs, dim=-1)
-            gate_outputs = torch.stack(gate_outputs, dim=-1)
+            outs: list[Tensor] = [ghonu(x, return_elements=True) for ghonu in self.ghonus]
+            # outs: Tuple of (output, predictor_output, gate_output)
+            outputs, predictor_outputs, gate_outputs = (torch.stack(t, dim=-1) for t in zip(*outs))
             # Reshape outputs for 'linear' and 'raw' output types
             if self.output_type in ["linear", "raw"]:
                 outputs = outputs.view(x.size(0), -1)
@@ -249,8 +257,7 @@ class GHONN(nn.Module):
         # Reshape outputs for 'linear' and 'raw' output types
         if self.output_type in ["linear", "raw"]:
             outputs = outputs.view(x.size(0), -1)
-        final = self.head(outputs)
-        return final
+        return self.head(outputs)
 
 
 if __name__ == "__main__":

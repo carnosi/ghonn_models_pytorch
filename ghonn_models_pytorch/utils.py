@@ -1,5 +1,7 @@
 """Utils for HONU based models."""
 
+from __future__ import annotations
+
 from itertools import cycle, islice
 from warnings import warn
 
