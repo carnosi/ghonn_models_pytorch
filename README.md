@@ -22,8 +22,8 @@
 
 👉 **Curious how it works in practice?** Check out the example notebooks and usage guides included in this repository.
 
-## 📖 [Project Documentation](https://ghonn.readthedocs.io/) 📖
-Visit [Read The Docs Project Page](https://ghonn.readthedocs.io/) or read the following README to know more about Gated Higher Order Neural Network Models Pytorch (GHONN for short) library.
+## 📖 [Project Documentation](https://gmp.readthedocs.io/) 📖
+Visit [Read The Docs Project Page](https://gmp.readthedocs.io/) or read the following README to know more about Gated Higher Order Neural Network Models Pytorch (GHONN for short) library.
 
 ## ✨ Features <a name="features"></a>
 
