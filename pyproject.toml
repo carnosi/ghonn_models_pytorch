@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghonn_models_pytorch"
-version = "0.1.0"
 description = " Gated Higher Order Neural Networks models. PyTorch."
 authors = [
     { name = "Ondrej Budik", email = "obudik@jcu.cz" }
