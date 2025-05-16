@@ -4,7 +4,7 @@
 
 **Python library with polynomial neural networks**
 
-[![Project Status: WIP](https://img.shields.io/badge/repo_status-WIP-<COLOR>?style=for-the-badge&color=yellow)](https://www.repostatus.org/#WIP) [![Read the Docs](https://img.shields.io/readthedocs/ghonn?style=for-the-badge&logo=readthedocs&logoColor=white)](https://gmp.readthedocs.io/en/latest/)
+[![Project Status: WIP](https://img.shields.io/badge/repo_status-WIP-<COLOR>?style=for-the-badge&color=yellow)](https://www.repostatus.org/#WIP) [![Read the Docs](https://img.shields.io/readthedocs/gmp?style=for-the-badge&logo=readthedocs&logoColor=white)](https://gmp.readthedocs.io/en/latest/)
 
 [![PyPI](https://img.shields.io/pypi/v/ghonn-models-pytorch?color=red&style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ghonn-models-pytorch/) [![Python - Version](https://img.shields.io/badge/PYTHON-3.9+-red?style=for-the-badge&logo=python&logoColor=white)](https://pepy.tech/project/segmentation-models-pytorch) [![PyTorch - Version](https://img.shields.io/badge/PYTORCH-2.7+-red?style=for-the-badge&logo=pytorch)](https://pepy.tech/project/ghonn-models-pytorch)
 
