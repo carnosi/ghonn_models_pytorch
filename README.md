@@ -1,7 +1,16 @@
-# GHONN Models Pytorch
-[![Project Status: Active - The project has reached a stable, usable
-state and is being actively
-developed.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#WIP) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<div align="center">
+
+<img src="https://i.ibb.co/W4jthZ7R/GHONN-models-logo.png" alt="logo" width="50%" />
+
+**Python library with polynomial neural networks**
+
+[![Project Status: WIP](https://img.shields.io/badge/repo_status-WIP-<COLOR>?style=for-the-badge&color=yellow)](https://www.repostatus.org/#WIP) [![Read the Docs](https://img.shields.io/readthedocs/ghonn?style=for-the-badge&logo=readthedocs&logoColor=white)](https://ghonn.readthedocs.io/en/latest/)
+
+[![PyPI](https://img.shields.io/pypi/v/ghonn-models-pytorch?color=red&style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ghonn-models-pytorch/) [![Python - Version](https://img.shields.io/badge/PYTHON-3.9+-red?style=for-the-badge&logo=python&logoColor=white)](https://pepy.tech/project/segmentation-models-pytorch) [![PyTorch - Version](https://img.shields.io/badge/PYTORCH-2.7+-red?style=for-the-badge&logo=pytorch)](https://pepy.tech/project/segmentation-models-pytorch)
+
+[![License](https://img.shields.io/badge/License-MIT-<COLOR>.svg?style=for-the-badge&color=blue)](https://github.com/carnosi/ghonn_models_pytorch/blob/main/LICENSE)
+
+</div>
 
 ## Introduction
 **GHONN Models Pytorch** brings advanced neural architectures to your PyTorch projects: Higher Order Neural Units (HONU), Higher Order Neural Networks (HONN), Gated Higher Order Neural Units (gHONU), and Gated Higher Order Neural Networks (gHONN).
@@ -33,10 +42,16 @@ uv pip install ghonn-models-pytorch
 
 Or, to install from source:
 
+
 ```bash
 git clone https://github.com/carnosi/ghonn_models_pytorch.git
 cd ghonn_models_pytorch
-pip install -r requirements.txt
+pip install .
+```
+Or, with **[uv](https://github.com/astral-sh/uv)**:
+
+```bash
+uv pip install .
 ```
 
 ## Features
