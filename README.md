@@ -17,12 +17,18 @@ developed.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repos
 ## Requirements & Installation
 
 - **Python:** 3.12 or newer
-- **PyTorch:** 2.0.6 or newer
+- **PyTorch:** 2.7.0 or newer
 
-Once the package is released on PyPI, install it with:
+To install the package (once released on PyPI), use your preferred package manager:
 
+**With pip:**
 ```bash
 pip install ghonn-models-pytorch
+```
+
+**With uv:**
+```bash
+uv pip install ghonn-models-pytorch
 ```
 
 Or, to install from source:
@@ -73,29 +79,36 @@ pip install -r requirements.txt
 
 ## Tips & Tricks
 * In the case of GHONU based units it is often benefitial to have different initial learning rate between the two neurons.
-
-## Application Examples
-The following papers mostly rely on the legacy code instead of the current pytorch version, however the usage target is the same with the pytorch implementation beeing user friendly and computationally efficient compared to the legacy code.
-
-[1] ...
+* more TBD
 
 
 ## References
-This codebase builds on top of the research conducted in the following papers:
-HONU:
-[1] ...
-GHONU:
-[1] ...
+This repository is inspired by the foundational research presented in the following papers. While the original studies utilized legacy implementations, this PyTorch-based version offers a more user-friendly and computationally efficient alternative, maintaining the same core objectives and functionality.
+
+**HONU**:
+```plaintext
+[1] P. M. Benes and I. Bukovsky, “Railway Wheelset Active Control and Stability via Higher Order Neural Units,” IEEE/ASME Transactions on Mechatronics, vol. 28, no. 5, pp. 2964–2975, Oct. 2023, doi: 10.1109/TMECH.2023.3258909.
+
+[2] I. Bukovsky, G. Dohnal, P. M. Benes, K. Ichiji, and N. Homma, “Letter on Convergence of In-Parameter-Linear Nonlinear Neural Architectures With Gradient Learnings,” IEEE Transactions on Neural Networks and Learning Systems, vol. 34, no. 8, pp. 5189–5192, Aug. 2023, doi: 10.1109/TNNLS.2021.3123533.
+
+[3] I. Bukovsky, “Deterministic behavior of temperature field in turboprop engine via shallow neural networks,” Neural Comput & Applic, vol. 33, no. 19, pp. 13145–13161, Oct. 2021, doi: 10.1007/s00521-021-06013-7.
+
+[4] P. M. Benes, I. Bukovsky, M. Vesely, J. Voracek, K. Ichiji, and N. Homma, “Framework for Discrete-Time Model Reference Adaptive Control of Weakly Nonlinear Systems with HONUs,” in Computational Intelligence, C. Sabourin, J. J. Merelo, K. Madani, and K. Warwick, Eds., Cham: Springer International Publishing, 2019, pp. 239–262. doi: 10.1007/978-3-030-16469-0_13.
+```
+**GHONU**:
+```plaintext
+[1] O. Budik, I. Bukovsky, and N. Homma, “Potentials of Gated Higher Order Neural Units for Signal Decomposition and Process Monitoring,” Procedia Computer Science, vol. 253, pp. 2278–2287, Jan. 2025, doi: 10.1016/j.procs.2025.01.288.
+```
 
 ## How To Cite
-If ghonn_models_pytorch has been useful in your research or work, please consider citing our article:
+If `ghonn_models_pytorch` has been useful in your research or work, please consider citing our article:
 
 ```plaintext
-TBD
+Work in progress. Use GHONU (10.1016/j.procs.2025.01.288) for now please.
 ```
 
 BibText:
-```plaintext
-TBD
+```bibtex
+Work in progress. Use GHONU (10.1016/j.procs.2025.01.288) for now please.
 ```
 
