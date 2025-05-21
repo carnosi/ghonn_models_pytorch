@@ -36,7 +36,6 @@ docs = [
 dev = [
     "ruff>=0.11",
     "mypy",
-    "jupyter",
     "setuptools",
     "pylint",
     "build",
@@ -44,6 +43,8 @@ dev = [
 examples = [
     "matplotlib",
     "jupyter",
+    "sklearn",
+    "tqdm",
 ]
 
 [project.urls]

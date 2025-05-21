@@ -8,7 +8,7 @@ New examples will be added over time, so check back every now and then.
 
 Available Jupyter notebooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TBD
+- `01_air_passanger_prediction.ipynb <https://github.com/carnosi/ghonn_models_pytorch/blob/main/examples/01_air_passanger_prediction.ipynb>`_
 
 Dataset loader API
 ~~~~~~~~~~~~~~~~~~~
