@@ -87,5 +87,5 @@ Quick Start 🚀
             # Update weights
             optimizer.step()
 
-For more information you can check the following examples:
-- TBD
+.. note::
+    For additional details and practical usage, please refer to the :doc:`examples` section.
