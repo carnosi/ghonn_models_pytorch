@@ -12,7 +12,7 @@ Available Jupyter notebooks
 
 Dataset loader API
 ~~~~~~~~~~~~~~~~~~~
-.. autofunction:: ghonn_models_pytorch.datasets.load_dataset
+.. autofunction:: ghonn_models_pytorch.datasets.load_example_dataset
 
 
 Available Datasets
