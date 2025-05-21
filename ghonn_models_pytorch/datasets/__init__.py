@@ -2,8 +2,8 @@
 
 __version__ = "0.0.1"
 
-from .data_loaders import load_dataset
+from .data_loaders import load_example_dataset
 
 __all__ = [
-    "load_dataset",
+    "load_example_dataset",
 ]

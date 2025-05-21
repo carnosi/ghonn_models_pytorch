@@ -20,7 +20,7 @@ def _get_dataset_functions() -> dict[str, FunctionType]:
     }
 
 
-def load_dataset(name: str, **kwargs: dict[str, Any]) -> pd.DataFrame:
+def load_example_dataset(name: str, **kwargs: dict[str, Any]) -> pd.DataFrame:
     """Unified dataset loader interface from collections module.
 
     This function loads datasets from the collections module based on the provided name,
