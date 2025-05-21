@@ -42,11 +42,12 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/carnosi/ghonn_models_pytorch"
+Homepage = "https://gmp.readthedocs.io/en/latest/"
 Repository = "https://github.com/carnosi/ghonn_models_pytorch"
 
 [tool.ruff]
 line-length = 100
+extend-include = ["*.ipynb"]
 exclude = [
     ".git",
     ".mypy_cache",
