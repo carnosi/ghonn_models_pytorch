@@ -21,13 +21,14 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "torch>=2.7.0",
+    "torch~=2.7.0",
     "numpy~=2.2.0",
+    "pandas~=2.2.0",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-docs= [
+docs = [
     "sphinx",
     "autodocsumm",
     "sphinx-book-theme",
@@ -35,18 +36,24 @@ docs= [
 dev = [
     "ruff>=0.11",
     "mypy",
-    "jupyter",
     "setuptools",
     "pylint",
     "build",
 ]
+examples = [
+    "matplotlib",
+    "jupyter",
+    "sklearn",
+    "tqdm",
+]
 
 [project.urls]
-Homepage = "https://github.com/carnosi/ghonn_models_pytorch"
+Homepage = "https://gmp.readthedocs.io/en/latest/"
 Repository = "https://github.com/carnosi/ghonn_models_pytorch"
 
 [tool.ruff]
 line-length = 100
+extend-include = ["*.ipynb"]
 exclude = [
     ".git",
     ".mypy_cache",

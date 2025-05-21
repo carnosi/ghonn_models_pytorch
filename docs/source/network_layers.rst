@@ -10,10 +10,10 @@ Network Layers 🧩
 
 HONN
 ~~~~
-.. autoclass:: ghonn_models_pytorch.HONN
+.. autoclass:: ghonn_models_pytorch.core.HONN
 
 .. _ghonn:
 
 GHONN
 ~~~~~
-.. autoclass:: ghonn_models_pytorch.GHONN
+.. autoclass:: ghonn_models_pytorch.core.GHONN

@@ -63,7 +63,7 @@ napoleon_numpy_docstring = False
 autodoc_mock_imports = [
     "torch",
     "numpy",
-    "ghonn_models_pytorch",
+    # "ghonn_models_pytorch",
 ]
 
 autoclass_content = "both"
