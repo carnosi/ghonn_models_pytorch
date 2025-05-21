@@ -21,13 +21,14 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "torch>=2.7.0",
+    "torch~=2.7.0",
     "numpy~=2.2.0",
+    "pandas~=2.2.0",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-docs= [
+docs = [
     "sphinx",
     "autodocsumm",
     "sphinx-book-theme",
@@ -39,6 +40,10 @@ dev = [
     "setuptools",
     "pylint",
     "build",
+]
+examples = [
+    "matplotlib",
+    "jupyter",
 ]
 
 [project.urls]
