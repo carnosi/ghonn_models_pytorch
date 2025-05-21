@@ -10,10 +10,10 @@ Neurons 🧠
 
 HONU
 ~~~~
-.. autoclass:: ghonn_models_pytorch.HONU
+.. autoclass:: ghonn_models_pytorch.core.HONU
 
 .. _ghonu:
 
 GHONU
 ~~~~~
-.. autoclass:: ghonn_models_pytorch.GHONU
+.. autoclass:: ghonn_models_pytorch.core.GHONU

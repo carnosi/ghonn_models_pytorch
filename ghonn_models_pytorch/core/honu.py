@@ -47,9 +47,9 @@ class HONU(nn.Module):
             activation (str, optional): Activation function to be used, by default "identity".
             **kwargs: Additional keyword arguments:
 
-                weight_divisor (int or float, optional): Divisor for the randomly initialized
-                    weights, by default 100.0.
-                bias (bool, optional): Whether to include a bias term in the model, by default True.
+                - weight_divisor (int or float, optional): Divisor for the randomly initialized
+                  weights, by default 100.0.
+                - bias (bool, optional): Whether to include a bias term, by default True.
 
         Attributes:
             order (int): Polynomial order of the model.
