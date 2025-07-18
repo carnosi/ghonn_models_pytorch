@@ -1,7 +1,5 @@
 """Defines the Higher-Order Neural Units (HONU) model."""
 
-from __future__ import annotations
-
 import math
 from itertools import combinations_with_replacement
 from typing import Any
@@ -9,7 +7,7 @@ from typing import Any
 import torch
 from torch import Tensor, nn
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 
 class HONU(nn.Module):
@@ -55,6 +53,10 @@ class HONU(nn.Module):
             order (int): Polynomial order of the model.
             in_features (int): Number of input features.
             _weight_divisor (float): Divisor used to scale the randomly initialized weights.
+            _weight_init_mode (str): Method for initializing weights, can be "random", "zeros",
+                "ones", "xavier", "kaiming_normal", or "kaiming_uniform".
+            _activation (str): Activation function to be used.
+            _activation_function (callable): The actual activation function to apply.
             _bias (bool): Indicates whether a bias term is included in the model.
             weight (nn.Parameter): Trainable weights of the model.
             _num_combinations (int): Number of polynomial feature combinations.
@@ -71,6 +73,7 @@ class HONU(nn.Module):
             msg = f"weight_divisor must be a number or string, got {type(weight_divisor)}"
             raise TypeError(msg)
         self._weight_divisor = float(weight_divisor)
+        self._weight_init_mode = kwargs.get("weight_init_mode", "random")
         self._bias = kwargs.get("bias", True)
         self._activation = activation
         if self._activation in ["identity", "linear"]:
@@ -125,6 +128,15 @@ class HONU(nn.Module):
             - n is the number of states, calculated as the input length + 1 if a bias is included.
             - r is the polynomial order of the neuron.
 
+        The weights are initialized using various methods based on the `_weight_init_mode`:
+
+        - "random": Uniformly distributed random values scaled by `_weight_divisor`.
+        - "zeros": All weights initialized to zero.
+        - "ones": All weights initialized to one.
+        - "xavier": Xavier initialization for 1D tensors.
+        - "kaiming_normal": Kaiming normal initialization for 1D tensors.
+        - "kaiming_uniform": Kaiming uniform initialization for 1D tensors.
+
         Returns:
             Array of initialized weights.
         """
@@ -134,8 +146,33 @@ class HONU(nn.Module):
             math.factorial(n_weights + self.order - 1)
             / (math.factorial(self.order) * math.factorial(n_weights - 1))
         )
-        # Initialize weights randomly and scale them
-        return torch.rand(num_weights) / self._weight_divisor
+        # Initialize weights using PyTorch native methods
+        weights = torch.empty(num_weights)
+
+        if self._weight_init_mode == "random":
+            torch.nn.init.uniform_(weights, 0, 1)
+            weights /= self._weight_divisor
+        elif self._weight_init_mode == "zeros":
+            torch.nn.init.zeros_(weights)
+        elif self._weight_init_mode == "ones":
+            torch.nn.init.ones_(weights)
+        elif self._weight_init_mode == "xavier":
+            # For 1D tensors, manually compute Xavier initialization
+            limit = math.sqrt(6 / (self.in_features + num_weights))
+            torch.nn.init.uniform_(weights, -limit, limit)
+        elif self._weight_init_mode == "kaiming_normal":
+            # For 1D tensors, manually compute Kaiming normal initialization
+            std = math.sqrt(2 / self.in_features)
+            torch.nn.init.normal_(weights, mean=0, std=std)
+        elif self._weight_init_mode == "kaiming_uniform":
+            # For 1D tensors, manually compute Kaiming uniform initialization
+            limit = math.sqrt(6 / self.in_features)
+            torch.nn.init.uniform_(weights, -limit, limit)
+        else:
+            msg = f"Unknown weight initialization mode: {self._weight_init_mode}"
+            raise ValueError(msg)
+
+        return weights
 
     def _get_combinations(self) -> Tensor:
         """Precompute and return all index combinations for the given input length and order.
@@ -196,6 +233,10 @@ class HONU(nn.Module):
         Returns:
             Tensor[B, 1]: Output tensor from the model.
         """
+        # Check if input shape matches the expected input length
+        if x.size(1) != self.in_features:
+            msg = f"Input shape mismatch: expected {self.in_features} features, got {x.size(1)}."
+            raise ValueError(msg)
         # Get the polynomial feature map
         colx = self._get_colx(x)
 

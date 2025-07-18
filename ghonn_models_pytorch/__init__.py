@@ -1,6 +1,6 @@
 """GHONN - A Python package for Gated Higher Order Neural Networks."""
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from .core import GHONN, GHONU, HONN, HONU
 from .datasets import load_example_dataset
