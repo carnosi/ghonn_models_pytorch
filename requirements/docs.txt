@@ -1,4 +1,4 @@
-torch==2.7.1
+torch==2.8.0
 autodocsumm==0.2.14
 six==1.17.0
 sphinx==8.2.3
