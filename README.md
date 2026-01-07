@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://i.ibb.co/4nT0x4HL/GHONN-models-logo.png" alt="logo" width="50%" />
+<img src="docs/source/_static/logo.png" alt="logo" width="50%" />
 
 **Python library with polynomial neural networks**
 
