@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/source/_static/logo.png" alt="logo" width="50%" />
+<img src="https://raw.githubusercontent.com/carnosi/ghonn_models_pytorch/main/docs/source/_static/logo.png" alt="logo" width="50%" />
 
 **Python library with polynomial neural networks**
 
