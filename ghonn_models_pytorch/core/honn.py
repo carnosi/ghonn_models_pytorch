@@ -7,7 +7,7 @@ from typing import Any, Callable
 import torch
 from torch import Tensor, nn
 
-from .honu import HONU
+from .banks import HonuBank
 from .utils import normalize_list_to_size
 
 __version__ = "0.0.1"
@@ -27,8 +27,7 @@ class HONN(nn.Module):
         __init__: Initializes the HONN model with the specified parameters.
         __repr__: Returns a string representation of the HONN model.
         forward: Performs a forward pass through the HONN model.
-        _assign_polynomial_orders: Adjusts the polynomial orders list to match
-                the number of layers.
+        The polynomial orders are normalized to match the configured layer size.
         _get_head: Constructs and returns the output head function based on the
                 specified output type.
     """
@@ -67,7 +66,8 @@ class HONN(nn.Module):
             layer_size (int): Number of HONU in the model layer.
             polynomial_orders (list[int]): List of polynomial orders for each layer.
             output_type (str): Type of output transformation.
-            honu (nn.ModuleList): List of HONU neurons in the model.
+            honu (HonuBank): Grouped HONU neurons. Use ``honu.indices`` to map
+                each group back to output positions.
             head (callable): Output head function or module for processing the model's output.
         """
         super().__init__()
@@ -92,11 +92,12 @@ class HONN(nn.Module):
         # Extract relevant kwargs
 
         # Initialize HONU neurons
-        self.honu = nn.ModuleList(
-            [
-                HONU(in_features, order, activation=activation, **kwargs)
-                for order, activation in zip(self.polynomial_orders, self.activations)
-            ]
+        self.honu = HonuBank(
+            in_features=in_features,
+            out_features=layer_size,
+            orders=self.polynomial_orders,
+            activations=self.activations,
+            **kwargs,
         )
         # Initialize output head
         self.head = self._get_head()
@@ -204,17 +205,9 @@ class HONN(nn.Module):
                 - "linear": (batch_size, out_features), where a linear transformation is applied.
                 - "raw": (batch_size, layer_size * out_features), where raw outputs are returned.
         """
-        output = torch.stack([self.honu[i](x) for i in range(self.layer_size)], dim=-1)
+        output = self.honu(x)
 
-        # Apply the output head
-        if self.output_type == "linear":
-            output = self.head(output.view(x.size(0), -1))
-        elif self.output_type == "raw":
-            output = output.view(x.size(0), -1)
-        else:
-            output = self.head(output)
-
-        return output
+        return self.head(output)
 
 
 if __name__ == "__main__":

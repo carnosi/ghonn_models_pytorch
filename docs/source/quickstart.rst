@@ -46,10 +46,10 @@ Quick Start 🚀
 
         # Create single HONU based layer - HONN with 4 neurons of different orders and activation functions.
         honn_layer = gmp.HONN(
-            input_shape=3,                          # Number of input features
-            output_shape=2,                         # Number of output features
+            in_features=3,                          # Number of input features
+            out_features=2,                         # Number of output features
             layer_size=4,                           # Number of neurons in the layer
-            orders=(2, 3)                           # Degree of the polynomials in the layer. If shorter than layer size it works as rolling buffer
+            polynomial_orders=(2, 3),               # Degree of the polynomials; cycles if shorter than layer_size
             activations=("identity", "sigmoid"),    # Activation functions for the neurons in the layer. If shorter work like a rolling buffer
             output_type="linear",                   # Output type of the layer. Can be "linear" or "sum" or "raw"
             **kwargs
@@ -57,8 +57,8 @@ Quick Start 🚀
 
         # Create single GHONU based layer - GHONN with 4 neurons of different orders and activation functions.
         ghonn_layer = gmp.GHONN(
-            input_shape=3,                              # Number of input features
-            output_shape=2,                             # Number of output features
+            in_features=3,                              # Number of input features
+            out_features=2,                             # Number of output features
             layer_size=4,                               # Number of neurons in the layer
             predictor_orders=(2, 3),                    # Degree of the predictor polynomials in the layer. If shorter than layer size it works as rolling buffer
             gate_orders=(3, 5),                         # Degree of the gate polynomials in the layer. If shorter than layer size it works as rolling buffer

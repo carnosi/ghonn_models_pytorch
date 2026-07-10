@@ -7,7 +7,7 @@ from typing import Any, Callable
 import torch
 from torch import Tensor, nn
 
-from .ghonu import GHONU
+from .banks import GhonuBank
 from .utils import normalize_list_to_size
 
 __version__ = "0.0.1"
@@ -61,7 +61,10 @@ class GHONN(nn.Module):
             gate_orders (list[int]): Normalized list of gate orders for each layer.
             gate_activations (list[str]): Normalized list of activation functions for the gates.
             output_type (str): Type of output layer.
-            ghonus (nn.ModuleList): List of GHONU layers.
+            ghonu (GhonuBank): Grouped GHONU layers.
+                Use ``ghonu.indices`` to map groups back to output positions.
+            predictors (nn.ModuleList): One predictor HONU per configuration group.
+            gates (nn.ModuleList): One active gate HONU per gated configuration group.
             head (nn.Module): Output head module.
         """
         super().__init__()
@@ -94,23 +97,14 @@ class GHONN(nn.Module):
         self._validate_setup()
 
         # Initialize the GHONUs
-        self.ghonus = nn.ModuleList(
-            [
-                GHONU(
-                    in_features=in_features,
-                    predictor_order=p,
-                    gate_order=g,
-                    predictor_activation=pa,
-                    gate_activation=ga,
-                    **kwargs,
-                )
-                for p, g, pa, ga in zip(
-                    self.predictor_orders,
-                    self.gate_orders,
-                    self.predictor_activations,
-                    self.gate_activations,
-                )
-            ]
+        self.ghonu = GhonuBank(
+            in_features=in_features,
+            out_features=layer_size,
+            predictor_orders=self.predictor_orders,
+            gate_orders=self.gate_orders,
+            predictor_activations=self.predictor_activations,
+            gate_activations=self.gate_activations,
+            **kwargs,
         )
         self.head = self._get_head()
 
@@ -138,28 +132,30 @@ class GHONN(nn.Module):
             f"  predictor_activation_functions={predictor_activations},",
             f"  gate_activation_functions={gate_activations},",
             f"  head={head_desc},",
-            f"  ghonus={self.ghonus}",
+            f"  ghonu={self.ghonu}",
         ]
         # Describe the model
         return "\n".join(lines) + "\n" + ")"
 
     @property
     def predictors(self) -> nn.ModuleList:
-        """Get the ModuleList of predictor HONUs in the GHONN model.
+        """Get grouped predictor HONUs in the GHONN model.
 
         Returns:
-            nn.ModuleList: ModuleList of predictor HONUs.
+            nn.ModuleList: One predictor HONU per configuration group.
         """
-        return nn.ModuleList([ghonu.predictor for ghonu in self.ghonus])
+        return nn.ModuleList([ghonu.predictor for ghonu in self.ghonu.groups])
 
     @property
     def gates(self) -> nn.ModuleList:
-        """Get the ModuleList of gate HONUs in the GHONN model.
+        """Get active grouped gate HONUs in the GHONN model.
 
         Returns:
-            nn.ModuleList: ModuleList of gate HONUs.
+            nn.ModuleList: One gate HONU per gated configuration group.
         """
-        return nn.ModuleList([ghonu.gate for ghonu in self.ghonus])
+        return nn.ModuleList(
+            [ghonu.gate for ghonu in self.ghonu.groups if ghonu.gate is not None]
+        )
 
     def _validate_setup(self) -> None:
         """Validates the configuration of the model to ensure all parameters are correctly set.
@@ -242,22 +238,9 @@ class GHONN(nn.Module):
             tuple: (output, (predictor_outputs, gate_outputs)) if return_elements is True.
         """
         if return_elements:
-            outs: list[Tensor] = [ghonu(x, return_elements=True) for ghonu in self.ghonus]
-            # outs: Tuple of (output, predictor_output, gate_output)
-            outputs, predictor_outputs, gate_outputs = (torch.stack(t, dim=-1) for t in zip(*outs))
-            # Reshape outputs for 'linear' and 'raw' output types
-            if self.output_type in ["linear", "raw"]:
-                outputs = outputs.view(x.size(0), -1)
-                predictor_outputs = predictor_outputs.view(x.size(0), -1)
-                gate_outputs = gate_outputs.view(x.size(0), -1)
-            final = self.head(outputs)
-            return final, (predictor_outputs, gate_outputs)
-
-        outputs = torch.stack([ghonu(x) for ghonu in self.ghonus], dim=-1)
-        # Reshape outputs for 'linear' and 'raw' output types
-        if self.output_type in ["linear", "raw"]:
-            outputs = outputs.view(x.size(0), -1)
-        return self.head(outputs)
+            outputs, predictor_outputs, gate_outputs = self.ghonu.forward_with_elements(x)
+            return self.head(outputs), (predictor_outputs, gate_outputs)
+        return self.head(self.ghonu(x))
 
 
 if __name__ == "__main__":

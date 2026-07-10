@@ -6,7 +6,7 @@
 
 [![Project Status: WIP](https://img.shields.io/badge/repo_status-WIP-<COLOR>?style=for-the-badge&color=yellow)](https://www.repostatus.org/#WIP) [![Read the Docs](https://img.shields.io/readthedocs/gmp?style=for-the-badge&logo=readthedocs&logoColor=white)](https://gmp.readthedocs.io/en/latest/)
 
-[![PyPI](https://img.shields.io/pypi/v/ghonn-models-pytorch?color=red&style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ghonn-models-pytorch/) [![Python - Version](https://img.shields.io/badge/PYTHON-3.9+-red?style=for-the-badge&logo=python&logoColor=white)](https://pepy.tech/project/ghonn-models-pytorch) [![PyTorch - Version](https://img.shields.io/badge/PYTORCH-2.7+-red?style=for-the-badge&logo=pytorch)](https://pepy.tech/project/ghonn-models-pytorch)
+[![PyPI](https://img.shields.io/pypi/v/ghonn-models-pytorch?color=red&style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ghonn-models-pytorch/) [![Python - Version](https://img.shields.io/badge/PYTHON-3.12+-red?style=for-the-badge&logo=python&logoColor=white)](https://pepy.tech/project/ghonn-models-pytorch) [![PyTorch - Version](https://img.shields.io/badge/PYTORCH-2.13+-red?style=for-the-badge&logo=pytorch)](https://pepy.tech/project/ghonn-models-pytorch)
 
 [![License](https://img.shields.io/badge/License-MIT-<COLOR>?style=for-the-badge&color=blue)](https://github.com/carnosi/ghonn_models_pytorch/blob/main/LICENSE)
 
@@ -97,10 +97,10 @@ kwargs = {
 
 # Create single HONU based layer - HONN with 4 neurons of different orders and activation functions.
 honn_layer = gmp.HONN(
-    input_shape=3,                          # Number of input features
-    output_shape=2,                         # Number of output features
+    in_features=3,                          # Number of input features
+    out_features=2,                         # Number of output features
     layer_size=4,                           # Number of neurons in the layer
-    orders=(2, 3)                           # Degree of the polynomials in the layer. If shorter than layer size it works as rolling buffer
+    polynomial_orders=(2, 3),               # Degree of the polynomials; cycles if shorter than layer_size
     activations=("identity", "sigmoid"),    # Activation functions for the neurons in the layer. If shorter work like a rolling buffer
     output_type="linear",                   # Output type of the layer. Can be "linear" or "sum" or "raw"
     **kwargs
