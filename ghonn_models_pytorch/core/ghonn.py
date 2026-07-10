@@ -97,9 +97,9 @@ class GHONN(nn.Module):
         self.ghonus = nn.ModuleList(
             [
                 GHONU(
-                    in_features,
-                    p,
-                    g,
+                    in_features=in_features,
+                    predictor_order=p,
+                    gate_order=g,
                     predictor_activation=pa,
                     gate_activation=ga,
                     **kwargs,

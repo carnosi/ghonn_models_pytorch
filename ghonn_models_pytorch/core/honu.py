@@ -1,252 +1,152 @@
-"""Defines the Higher-Order Neural Units (HONU) model."""
+"""Vectorized Higher-Order Neural Unit."""
+
+from __future__ import annotations
 
 import math
 from itertools import combinations_with_replacement
-from typing import Any
-
 import torch
 from torch import Tensor, nn
-
-__version__ = "0.0.2"
+import torch.nn.functional as functional
 
 
 class HONU(nn.Module):
-    """Higher-Order Neural Units (HONU) model for polynomial regression.
+    """Higher-Order Neural Unit for learned polynomial regression.
 
-    This model computes polynomial feature combinations of the input data and
-    applies trainable weights to produce the output. It supports configurable
-    polynomial orders and optional bias terms.
-
-    Methods:
-        __init__: Initializes the HONU model with the specified parameters.
-        __repr__: Returns a string representation of the HONU model.
-        forward: Performs a forward pass through the HONU model.
-        _validate_setup: Validates the configuration of the model.
-        _initialize_weights: Initializes the trainable weights of the model.
-        _get_combinations: Precomputes index combinations for polynomial features.
-        _get_colx: Computes the polynomial feature map for the input batch.
+    HONU evaluates every monomial of ``order`` over the input features, including
+    a constant feature when ``bias=True``, and projects those monomials through
+    learned weights. The unit supports both scalar use and vectorized outputs:
+    inputs shaped ``(..., in_features)`` produce outputs shaped
+    ``(..., out_features)``.
     """
-
-    _comb_idx: Tensor
 
     def __init__(
         self,
         in_features: int,
-        polynomial_order: int,
+        order: int,
+        out_features: int = 1,
         *,
+        bias: bool = True,
         activation: str = "identity",
-        **kwargs: dict[str, Any],
+        weight_init_mode: str = "random",
+        weight_divisor: float = 100.0,
+        monomial_chunk_size: int | None = None,
     ) -> None:
-        """Initialize the Higher-Order Neural Units model.
+        """Initialize a vectorized polynomial neural unit.
 
         Args:
-            in_features (int): Number of input features.
-            polynomial_order (int): Order of the HONU model.
-            activation (str, optional): Activation function to be used, by default "identity".
-            **kwargs: Additional keyword arguments:
-
-                - weight_divisor (int or float, optional): Divisor for the randomly initialized
-                  weights, by default 100.0.
-                - bias (bool, optional): Whether to include a bias term, by default True.
-
-        Attributes:
-            order (int): Polynomial order of the model.
-            in_features (int): Number of input features.
-            _weight_divisor (float): Divisor used to scale the randomly initialized weights.
-            _weight_init_mode (str): Method for initializing weights, can be "random", "zeros",
-                "ones", "xavier", "kaiming_normal", or "kaiming_uniform".
-            _activation (str): Activation function to be used.
-            _activation_function (callable): The actual activation function to apply.
-            _bias (bool): Indicates whether a bias term is included in the model.
-            weight (nn.Parameter): Trainable weights of the model.
-            _num_combinations (int): Number of polynomial feature combinations.
-            _comb_idx (Tensor): Precomputed index combinations for polynomial features.
+            in_features: Number of input features.
+            order: Polynomial order. Must be positive.
+            out_features: Number of independent polynomial outputs.
+            bias: Include a constant feature in the polynomial basis.
+            activation: Name of an activation in ``torch.nn.functional``.
+            weight_init_mode: One of ``random``, ``zeros``, ``ones``, ``xavier``,
+                ``kaiming_normal``, or ``kaiming_uniform``.
+            weight_divisor: Divisor used by ``random`` initialization.
+            monomial_chunk_size: Optional maximum number of monomials processed
+                at once to reduce peak memory use.
         """
         super().__init__()
-        # Main model parameters
-        self.order = polynomial_order
+        if in_features <= 0 or out_features <= 0:
+            raise ValueError("in_features and out_features must be positive integers.")
+        if order <= 0:
+            raise ValueError("order must be a positive integer.")
+        if weight_divisor <= 0:
+            raise ValueError("weight_divisor must be greater than zero.")
+        if monomial_chunk_size is not None and monomial_chunk_size <= 0:
+            raise ValueError("monomial_chunk_size must be positive or None.")
+
         self.in_features = in_features
+        self.order = order
+        self.out_features = out_features
+        self.bias = bias
+        self.activation = activation.lower()
+        self.weight_init_mode = weight_init_mode
+        self.weight_divisor = float(weight_divisor)
+        self.monomial_chunk_size = monomial_chunk_size
 
-        # Optional params
-        weight_divisor = kwargs.get("weight_divisor", 100.0)
-        if not isinstance(weight_divisor, (int, float, str)):
-            msg = f"weight_divisor must be a number or string, got {type(weight_divisor)}"
-            raise TypeError(msg)
-        self._weight_divisor = float(weight_divisor)
-        self._weight_init_mode = kwargs.get("weight_init_mode", "random")
-        self._bias = kwargs.get("bias", True)
-        self._activation = activation
-        if self._activation in ["identity", "linear"]:
-            self._activation_function = lambda x: x
-        else:
-            self._activation_function = getattr(torch.nn.functional, self._activation)
-        self._validate_setup()
-
-        # Initialize weights as trainable parameters
-        self.weight = nn.Parameter(self._initialize_weights())
-
-        # Get all combinations of indices for the polynomial features
-        self._num_combinations = self.weight.size(0)
-        self.register_buffer("_comb_idx", self._get_combinations())
-
-    def __repr__(self) -> str:
-        """Return a string representation of the HONU model."""
-        return (
-            f"HONU(in_features={self.in_features}, polynomial_order={self.order}, "
-            f"bias={self._bias}, activation={self._activation})"
-        )
-
-    def _validate_setup(self) -> None:
-        """Validates the configuration of the model to ensure all parameters are correctly set.
-
-        This method checks the following conditions:
-            - The `polynomial_order` must be greater than 0.
-            - The `in_features` must be greater than 0.
-            - The `weight_divisor` must be greater than 0.
-
-        Raises:
-            ValueError: If any of the above conditions are not met.
-        """
-        if self.order <= 0:
-            msg = f"Polynomial order must be greater than 0. Got {self.order}."
-            raise ValueError(msg)
-        if self.in_features <= 0:
-            msg = f"Input length must be greater than 0. Got {self.in_features}."
-            raise ValueError(msg)
-        if self._weight_divisor <= 0:
-            msg = f"Weight divisor must be greater than 0. Got {self._weight_divisor}."
-            raise ValueError(msg)
-
-    def _initialize_weights(self) -> Tensor:
-        """Initialize weights for the HONU model.
-
-        This method initializes the weights for the model based on the input length,
-        polynomial order, and whether a bias term is included. The number of weights
-        is calculated using the formula for combinations with repetition:
-            Combinations with repetition = ((n + r - 1)! / (r! * (n - 1)!))
-        where:
-            - n is the number of states, calculated as the input length + 1 if a bias is included.
-            - r is the polynomial order of the neuron.
-
-        The weights are initialized using various methods based on the `_weight_init_mode`:
-
-        - "random": Uniformly distributed random values scaled by `_weight_divisor`.
-        - "zeros": All weights initialized to zero.
-        - "ones": All weights initialized to one.
-        - "xavier": Xavier initialization for 1D tensors.
-        - "kaiming_normal": Kaiming normal initialization for 1D tensors.
-        - "kaiming_uniform": Kaiming uniform initialization for 1D tensors.
-
-        Returns:
-            Array of initialized weights.
-        """
-        # Calculate the number of weights needed based on the order and input length
-        n_weights = self.in_features + 1 if self._bias else self.in_features
-        num_weights = int(
-            math.factorial(n_weights + self.order - 1)
-            / (math.factorial(self.order) * math.factorial(n_weights - 1))
-        )
-        # Initialize weights using PyTorch native methods
-        weights = torch.empty(num_weights)
-
-        if self._weight_init_mode == "random":
-            torch.nn.init.uniform_(weights, 0, 1)
-            weights /= self._weight_divisor
-        elif self._weight_init_mode == "zeros":
-            torch.nn.init.zeros_(weights)
-        elif self._weight_init_mode == "ones":
-            torch.nn.init.ones_(weights)
-        elif self._weight_init_mode == "xavier":
-            # For 1D tensors, manually compute Xavier initialization
-            limit = math.sqrt(6 / (self.in_features + num_weights))
-            torch.nn.init.uniform_(weights, -limit, limit)
-        elif self._weight_init_mode == "kaiming_normal":
-            # For 1D tensors, manually compute Kaiming normal initialization
-            std = math.sqrt(2 / self.in_features)
-            torch.nn.init.normal_(weights, mean=0, std=std)
-        elif self._weight_init_mode == "kaiming_uniform":
-            # For 1D tensors, manually compute Kaiming uniform initialization
-            limit = math.sqrt(6 / self.in_features)
-            torch.nn.init.uniform_(weights, -limit, limit)
-        else:
-            msg = f"Unknown weight initialization mode: {self._weight_init_mode}"
-            raise ValueError(msg)
-
-        return weights
-
-    def _get_combinations(self) -> Tensor:
-        """Precompute and return all index combinations for the given input length and order.
-
-        This method generates combinations with replacement of indices based on the input
-        length and polynomial order. If bias is included, an additional feature is accounted
-        for in the combinations. The resulting combinations are stored as a tensor.
-
-        Returns:
-            Tensor: A tensor containing all index combinations with shape
-            (num_combinations, order).
-        """
-        # Precompute all index combinations once and store as buffer
-        n_feat = self.in_features + (1 if self._bias else 0)
-        return torch.tensor(
-            list(combinations_with_replacement(range(n_feat), self.order)),
+        combinations = torch.tensor(
+            list(
+                combinations_with_replacement(
+                    range(in_features + int(bias)),
+                    order,
+                )
+            ),
             dtype=torch.long,
-        )  # shape: (num_combinations, order)
+        )
+        self.register_buffer("comb_idx", combinations)
+        self.num_combinations = combinations.size(0)
+        self.weight = nn.Parameter(torch.empty(self.num_combinations, out_features))
+        self._validate_activation()
+        self.reset_parameters()
 
-    def _get_colx(self, x: Tensor) -> Tensor:
-        """Compute polynomial feature map using precomputed index combinations.
+    def reset_parameters(self) -> None:
+        """Reset the polynomial weights using the configured initializer."""
+        if self.weight_init_mode == "random":
+            nn.init.uniform_(self.weight, 0, 1)
+            with torch.no_grad():
+                self.weight.div_(self.weight_divisor)
+        elif self.weight_init_mode == "zeros":
+            nn.init.zeros_(self.weight)
+        elif self.weight_init_mode == "ones":
+            nn.init.ones_(self.weight)
+        elif self.weight_init_mode == "xavier":
+            limit = math.sqrt(6 / (self.in_features + self.num_combinations))
+            nn.init.uniform_(self.weight, -limit, limit)
+        elif self.weight_init_mode == "kaiming_normal":
+            nn.init.normal_(self.weight, std=math.sqrt(2 / self.in_features))
+        elif self.weight_init_mode == "kaiming_uniform":
+            limit = math.sqrt(6 / self.in_features)
+            nn.init.uniform_(self.weight, -limit, limit)
+        else:
+            raise ValueError(f"Unknown weight initialization mode: {self.weight_init_mode}")
 
-        For each sample in the batch, generates all degree-`order` monomials
-        (with replacement) of the input features. If `bias=True`, a constant
-        term is prepended before forming combinations.
+    def _validate_activation(self) -> None:
+        """Raise an error when the configured activation is unavailable."""
+        if self.activation not in {"identity", "linear"} and not hasattr(
+            functional, self.activation
+        ):
+            raise ValueError(f"Unknown activation function: {self.activation}")
 
-        Args:
-            x : Input batch of shape (batch_size, input_length).
-
-        Returns:
-            Tensor[B, num_combinations]: Tensor of shape (batch_size, num_combinations)
-                                        where each column is the product of one
-                                        combination of input features.
-        """
-        # Add bias column if needed
-        if self._bias:
-            ones = torch.ones((x.size(0), 1), device=x.device, dtype=x.dtype)
-            x = torch.cat([ones, x], dim=1)  # now x.shape = [B, n_feat]
-
-        # x_exp expected shape [B, num_combinations, n_feat]
-        x_exp = x.unsqueeze(1).expand(-1, self._comb_idx.size(0), -1)
-
-        # idx expected shape   [B, num_combinations, order]
-        idx = self._comb_idx.unsqueeze(0).expand(x.size(0), -1, -1)
-
-        # selected expected shape [B, num_combinations, order]
-        selected = x_exp.gather(2, idx)
-
-        # colx expected shape [B, num_combinations]
-        return selected.prod(dim=2)
+    def _polynomial_features(self, x: Tensor) -> Tensor:
+        """Build the monomial feature matrix for ``x``."""
+        if self.bias:
+            x = torch.cat((torch.ones_like(x[..., :1]), x), dim=-1)
+        flat_x = x.reshape(-1, x.size(-1))
+        chunks = (
+            ((0, self.num_combinations),)
+            if self.monomial_chunk_size is None
+            else (
+                (start, min(start + self.monomial_chunk_size, self.num_combinations))
+                for start in range(0, self.num_combinations, self.monomial_chunk_size)
+            )
+        )
+        features = []
+        for start, end in chunks:
+            indices = self.comb_idx[start:end]
+            monomials = flat_x[:, indices[:, 0]].clone()
+            for index in indices[:, 1:].unbind(dim=1):
+                monomials.mul_(flat_x[:, index])
+            features.append(monomials)
+        return torch.cat(features, dim=-1).reshape(*x.shape[:-1], self.num_combinations)
 
     def forward(self, x: Tensor) -> Tensor:
-        """Perform the forward pass of the HONU model.
+        """Return polynomial outputs with shape ``(*x.shape[:-1], out_features)``."""
+        if x.ndim < 2:
+            raise ValueError(f"HONU expects at least 2 dimensions, got {tuple(x.shape)}.")
+        if x.size(-1) != self.in_features:
+            raise ValueError(
+                f"Input shape mismatch: expected {self.in_features} features, got {x.size(-1)}."
+            )
+        features = self._polynomial_features(x)
+        output = features @ self.weight
+        if self.activation not in {"identity", "linear"}:
+            output = getattr(functional, self.activation)(output)
+        return output
 
-        Args:
-            x: Input tensor [B, input_length] with the data.
-
-        Returns:
-            Tensor[B, 1]: Output tensor from the model.
-        """
-        # Check if input shape matches the expected input length
-        if x.size(1) != self.in_features:
-            msg = f"Input shape mismatch: expected {self.in_features} features, got {x.size(1)}."
-            raise ValueError(msg)
-        # Get the polynomial feature map
-        colx = self._get_colx(x)
-
-        # Compute the output by multiplying the feature map with the weights
-        return self._activation_function(torch.matmul(colx, self.weight.view(-1, 1)))
-
-
-if __name__ == "__main__":
-    from pathlib import Path
-
-    filename = Path(__file__).name
-    MSG = f"The {filename} is not meant to be run as a script."
-    raise OSError(MSG)
+    def extra_repr(self) -> str:
+        """Describe the unit in the standard ``nn.Module`` representation."""
+        return (
+            f"in_features={self.in_features}, order={self.order}, "
+            f"out_features={self.out_features}, bias={self.bias}, "
+            f"activation={self.activation!r}"
+        )

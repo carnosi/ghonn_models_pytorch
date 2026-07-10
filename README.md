@@ -137,6 +137,16 @@ pip install ghonn-models-pytorch
 pip install git+https://github.com/carnosi/ghonn_models_pytorch
 ```
 
+## Compatibility notice
+The verion 0.2+ API uses vectorized PyTorch modules and does not guarantee backward compatibility with
+earlier releases. `HONU` accepts inputs shaped `(..., in_features)` and returns
+`(..., out_features)`. A `GHONU` with `gate_order=0` omits its gate and behaves as a HONU.
+Gates can be frozen with standard PyTorch controls:
+
+```python
+ghonu.gate.requires_grad_(False)
+```
+
 ## 📚 References <a name="references"></a>
 This repository is inspired by the foundational research presented in the following papers. While the original studies utilized legacy implementations, this PyTorch-based version offers a more user-friendly and computationally efficient alternative, maintaining the same core objectives and functionality.
 
