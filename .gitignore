@@ -29,3 +29,6 @@ dist/
 
 # Local files
 local/
+
+# UV
+uv.lock

@@ -1,6 +1,6 @@
-torch==2.8.0
+torch==2.13
 autodocsumm==0.2.14
-six==1.17.0
-sphinx==8.2.3
-sphinx-book-theme==1.1.4
-pandas==2.2.3
+six==1.17
+sphinx==9.1
+sphinx-book-theme==1.2
+pandas==3.0

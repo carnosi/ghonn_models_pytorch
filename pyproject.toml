@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools~=83.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,42 +9,41 @@ authors = [
     { name = "Ondrej Budik", email = "obudik@jcu.cz" }
 ]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     'Programming Language :: Python :: Implementation :: PyPy',
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "torch~=2.7.1",
-    "numpy~=2.2.0",
-    "pandas~=2.2.0",
+    "torch~=2.13",
+    "numpy~=2.5",
+    "pandas~=3.0",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 docs = [
-    "sphinx",
-    "autodocsumm",
-    "sphinx-book-theme",
+    "sphinx~=9.1",
+    "autodocsumm~=0.2.15",
+    "sphinx-book-theme~=1.2",
 ]
 dev = [
-    "ruff>=0.11",
-    "mypy",
-    "setuptools",
-    "pylint",
-    "build",
+    "ruff~=0.15",
+    "mypy~=2.2",
+    "setuptools~=83.0",
+    "pylint~=4.0",
+    "build~=1.5",
 ]
 examples = [
-    "matplotlib",
-    "jupyter",
-    "scikit-learn",
-    "tqdm",
+    "matplotlib~=3.11",
+    "jupyter~=1.1.1",
+    "scikit-learn~=1.9",
+    "tqdm~=4.48",
 ]
 
 [project.urls]
