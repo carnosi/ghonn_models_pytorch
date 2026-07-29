@@ -43,25 +43,25 @@ class GHONN(nn.Module):
         Args:
             in_features (int): Number of input features.
             out_features (int): Number of output features.
-            layer_size (int): Number of layers in the model.
-            predictor_orders (list[int]): List of predictor orders for each layer.
-            gate_orders (list[int]): List of gate orders for each layer.
+            layer_size (int): Number of GHONU neurons in the layer.
+            predictor_orders (list[int]): List of predictor orders for each neuron.
+            gate_orders (list[int]): List of gate orders for each neuron.
             predictor_activations (list[str] | tuple[str], optional): List or tuple of
                 activation functions for the predictor. Defaults to ("identity").
             gate_activations (list[str] | tuple[str], optional): List or tuple of
                 activation functions for the gates. Defaults to ("sigmoid").
             output_type (str, optional): Type of output layer. Defaults to "linear".
-            **kwargs: Additional keyword arguments passed to the GHONU layers.
+            **kwargs: Additional keyword arguments passed to the GHONU neurons.
 
         Attributes:
             in_features (int): Number of input features.
             out_features (int): Number of output features.
-            layer_size (int): Number of layers in the model.
-            predictor_orders (list[int]): Normalized list of predictor orders for each layer.
-            gate_orders (list[int]): Normalized list of gate orders for each layer.
+            layer_size (int): Number of GHONU neurons in the layer.
+            predictor_orders (list[int]): Normalized list of predictor orders for each neuron.
+            gate_orders (list[int]): Normalized list of gate orders for each neuron.
             gate_activations (list[str]): Normalized list of activation functions for the gates.
             output_type (str): Type of output layer.
-            ghonu (GhonuBank): Grouped GHONU layers.
+            ghonu (GhonuBank): Grouped GHONU neurons.
                 Use ``ghonu.indices`` to map groups back to output positions.
             predictors (nn.ModuleList): One predictor HONU per configuration group.
             gates (nn.ModuleList): One active gate HONU per gated configuration group.

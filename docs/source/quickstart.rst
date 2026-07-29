@@ -96,9 +96,9 @@ Quick Start 🚀
         # forecast.shape == (8, 12, 1); feature 0 is predicted by default.
 
 4. 🎉 Congratulations!
-    You've successfully created a polynomial neuron and a network layer!
-    You can now integrate them into your PyTorch models or even train single polynomial units or layers directly.
-    Sometimes a single neuron or layer might be sufficient for your task.
+    You've successfully created polynomial neurons, a network layer, and a full SA-GHONN forecasting model!
+    You can now integrate them into your PyTorch models or even train single polynomial units, layers, or the full model directly.
+    Sometimes a single neuron or layer might be sufficient for your task, while other times the full SA-GHONN model is what you need.
 
     .. code-block:: python
 

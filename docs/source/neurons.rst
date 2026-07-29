@@ -2,6 +2,9 @@
 
 Neurons 🧠
 ==========
+Elementary polynomial neurons. These are the building blocks used by the
+:doc:`network layers <network_layers>` and the :doc:`full models <full_models>`,
+but can also be used standalone.
 
 .. contents::
     :local:
@@ -17,25 +20,3 @@ HONU
 GHONU
 ~~~~~
 .. autoclass:: ghonn_models_pytorch.core.GHONU
-
-.. _saghonn:
-
-SA-GHONN
-~~~~~~~~
-.. autoclass:: ghonn_models_pytorch.core.SAGHONN
-
-Convolutional GHONN
-~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ghonn_models_pytorch.core.ConvGhonn
-
-GHONU bank
-~~~~~~~~~~
-.. autoclass:: ghonn_models_pytorch.core.GhonuBank
-
-HONU bank
-~~~~~~~~~
-.. autoclass:: ghonn_models_pytorch.core.HonuBank
-
-RevIN
-~~~~~
-.. autoclass:: ghonn_models_pytorch.core.RevIN

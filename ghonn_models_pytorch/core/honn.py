@@ -46,25 +46,25 @@ class HONN(nn.Module):
         """Initialize the Higher-Order Neural Network model.
 
         Args:
-            in_features (int): Number of input features for the model.
-            out_features (int): Number of output features for the model.
-            layer_size (int): Number of HONU layers in the model.
-            polynomial_orders (list[int]): List specifying the polynomial order for each layer.
+            in_features (int): Number of input features for the layer.
+            out_features (int): Number of output features for the layer.
+            layer_size (int): Number of HONU neurons in the layer.
+            polynomial_orders (list[int]): List specifying the polynomial order for each neuron.
                 - If the list length is less than `layer_size`, it will be cycled to match the size.
                 - If the list length is greater than `layer_size`, it will be truncated.
-            activations (list[str] | tuple[str], optional): List of activation fnfor each layer.
+            activations (list[str] | tuple[str], optional): List of activation fnfor each neuron.
                 - If the list length is less than `layer_size`, it will be cycled to match the size.
             output_type (str, optional): Type of output transformation. Defaults to "linear".
-                - "sum": Sum the outputs of all layers.
+                - "sum": Sum the outputs of all neurons.
                 - "linear": Apply a linear transformation to the concatenated outputs.
-                - "raw": Return the raw outputs of all layers without any transformation.
-            **kwargs: Additional keyword arguments passed to each HONU layer.
+                - "raw": Return the raw outputs of all neurons without any transformation.
+            **kwargs: Additional keyword arguments passed to each HONU neuron.
 
         Attributes:
-            in_features (int): Number of input features for the model.
-            out_features (int): Number of output features for the model.
-            layer_size (int): Number of HONU in the model layer.
-            polynomial_orders (list[int]): List of polynomial orders for each layer.
+            in_features (int): Number of input features for the layer.
+            out_features (int): Number of output features for the layer.
+            layer_size (int): Number of HONU neurons in the layer.
+            polynomial_orders (list[int]): List of polynomial orders for each neuron.
             output_type (str): Type of output transformation.
             honu (HonuBank): Grouped HONU neurons. Use ``honu.indices`` to map
                 each group back to output positions.
