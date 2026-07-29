@@ -68,7 +68,34 @@ Quick Start 🚀
             **kwargs
         )
 
-3. 🎉 Congratulations!
+3. Create the complete SA-GHONN forecasting network
+    SA-GHONN first embeds each input timestep with a GHONU bank, optionally using
+    ``ConvGhonn`` temporal GHONU filters when ``temporal_lookback`` is greater
+    than zero. Positional encoding is then added before a Transformer encoder
+    applies self-attention across the input sequence. The forecast head is
+    configurable: ``flat`` uses a linear projection of the full encoded sequence,
+    ``pool`` mean-pools the encoded sequence and applies an MLP, and ``query``
+    uses learned forecast queries to cross-attend to the self-attended sequence
+    before a final linear projection. Self-attention is always present; cross-
+    attention is used only by the ``query`` head.
+
+    .. code-block:: python
+
+        import torch
+        import ghonn_models_pytorch as gmp
+
+        # Forecast 12 steps from a 24-step, 3-feature input sequence.
+        sa_ghonn = gmp.SAGHONN(
+            input_length=24,
+            in_features=3,
+            out_features=12,
+        )
+
+        sequence = torch.randn(8, 24, 3)
+        forecast = sa_ghonn(sequence)
+        # forecast.shape == (8, 12, 1); feature 0 is predicted by default.
+
+4. 🎉 Congratulations!
     You've successfully created a polynomial neuron and a network layer!
     You can now integrate them into your PyTorch models or even train single polynomial units or layers directly.
     Sometimes a single neuron or layer might be sufficient for your task.
