@@ -42,7 +42,7 @@ Visit [Read The Docs Project Page](https://gmp.readthedocs.io/) or read the foll
 **Neuron Types** ⚡
 - **HONU:** The fundamental building block for higher-order modeling. For example, a 2nd order HONU is defined as:
 
-  ![HONU equation](https://latex.codecogs.com/png.image?\dpi{120}\bg_white\tilde{y}(k)=\sum_{i=0}^{n}\sum_{j=i}^{n}w_{i,j}x_ix_j=\mathbf{w}\cdot\mathrm{col}^{r=2}(\mathbf{x}))
+  ![Second-order HONU: y(k) = sum over i and j of w_ij x_i x_j](https://latex.codecogs.com/png.image?%5Cdpi%7B120%7D%5Cbg%7Bwhite%7D%5Ctilde%7By%7D%28k%29%3D%5Csum_%7Bi%3D0%7D%5E%7Bn%7D%5Csum_%7Bj%3Di%7D%5E%7Bn%7Dw_%7Bi%2Cj%7Dx_ix_j%3D%5Cmathbf%7Bw%7D%5Ccdot%5Cmathrm%7Bcol%7D%5E%7Br%3D2%7D%28%5Cmathbf%7Bx%7D%29)
 
   where:
   - $\tilde{y}(k)$ is the neuron output for input sample $k$
