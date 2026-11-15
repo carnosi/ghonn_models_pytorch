@@ -196,14 +196,13 @@ class HONN(nn.Module):
         """Perform a forward pass through the HONN model.
 
         Args:
-            x (Tensor): Input tensor of shape (batch_size, in_features).
+            x (Tensor): Input tensor of shape (..., in_features), with at least two dimensions.
 
         Returns:
-            Tensor: Output tensor of shape (batch_size, out_features). The shape depends on the
-            specified output_type:
-                - "sum": (batch_size, out_features), where outputs are summed across layers.
-                - "linear": (batch_size, out_features), where a linear transformation is applied.
-                - "raw": (batch_size, layer_size * out_features), where raw outputs are returned.
+            Tensor: Output shape depends on output_type:
+                - "sum": (...), summing neurons and removing the last dimension.
+                - "linear": (..., out_features), after the learned linear head.
+                - "raw": (..., layer_size), requiring out_features == layer_size.
         """
         output = self.honu(x)
 

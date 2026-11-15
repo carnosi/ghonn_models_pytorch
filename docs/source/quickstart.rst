@@ -10,7 +10,7 @@ Quick Start 🚀
         import ghonn_models_pytorch as gmp
 
         kwargs = {
-            "weight_divisor": 100,  # Divides weights to help with numerical stability
+            "weight_divisor": 100,  # Scales random initialization weights
             "bias": True            # Whether to use a bias term in the model
         }
 
@@ -22,7 +22,7 @@ Quick Start 🚀
             **kwargs
         )
 
-        # Create a Gater Higher Order Neural Unit (GHONU) with 3 inputs, predictor order 2 and gate order 3
+        # Create a Gated Higher Order Neural Unit (GHONU) with 3 inputs, predictor order 2 and gate order 3
         ghonu_neuron = gmp.GHONU(
             in_features=3,                      # Number of input features
             predictor_order=2,                  # Degree of the predictor polynomial
@@ -70,7 +70,7 @@ Quick Start 🚀
 
 3. Create the complete SA-GHONN forecasting network
     SA-GHONN decomposes the normalized sequence into trend, seasonal, and
-    residual signals. The trial-0896 ETTh1 defaults use a linear GHONU, a
+    residual signals. The defaults use a first-order predictor with a sigmoid gate, a
     16-kernel Conv-GHONU with 9-step kernels, and a temporal GHONU expert;
     one eight-head attention layer mixes the branch stack before a delta-MLP
     decoder.
@@ -98,16 +98,22 @@ Quick Start 🚀
 
     .. code-block:: python
 
+        import torch
+
+        # Synthetic regression data for the two-output HONN above.
+        data = torch.randn(32, 3)
+        targets = torch.randn(32, 2)
+        batch_size = 8
+        criterion = torch.nn.MSELoss()
+        optimizer = torch.optim.Adam(honn_layer.parameters(), lr=1e-3)
+        honn_layer.train()
         for i in range(0, data.size(0), batch_size):
-            # Get the batch
-            batch = data[i:i+batch_size]
-            # Forward pass
+            batch = data[i:i + batch_size]
+            target = targets[i:i + batch_size]
+            optimizer.zero_grad(set_to_none=True)
             output = honn_layer(batch)
-            # Compute loss
             loss = criterion(output, target)
-            # Backward pass
             loss.backward()
-            # Update weights
             optimizer.step()
 
 .. note::
