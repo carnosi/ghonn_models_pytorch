@@ -69,15 +69,11 @@ Quick Start 🚀
         )
 
 3. Create the complete SA-GHONN forecasting network
-    SA-GHONN first embeds each input timestep with a GHONU bank, optionally using
-    ``ConvGhonn`` temporal GHONU filters when ``temporal_lookback`` is greater
-    than zero. Positional encoding is then added before a Transformer encoder
-    applies self-attention across the input sequence. The forecast head is
-    configurable: ``flat`` uses a linear projection of the full encoded sequence,
-    ``pool`` mean-pools the encoded sequence and applies an MLP, and ``query``
-    uses learned forecast queries to cross-attend to the self-attended sequence
-    before a final linear projection. Self-attention is always present; cross-
-    attention is used only by the ``query`` head.
+    SA-GHONN decomposes the normalized sequence into trend, seasonal, and
+    residual signals. The trial-0896 ETTh1 defaults use a linear GHONU, a
+    16-kernel Conv-GHONU with 9-step kernels, and a temporal GHONU expert;
+    one eight-head attention layer mixes the branch stack before a delta-MLP
+    decoder.
 
     .. code-block:: python
 

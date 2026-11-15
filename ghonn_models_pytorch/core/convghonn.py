@@ -22,9 +22,11 @@ class ConvGhonn(nn.Module):
         gate_orders: int | tuple[int, ...] = (1,),
         predictor_activations: str | tuple[str, ...] = ("identity",),
         gate_activations: str | tuple[str, ...] = ("sigmoid",),
+        force_gate_output_one: bool = False,
         bias: bool = True,
         weight_init_mode: str = "random",
         weight_divisor: float = 100.0,
+        poly_dropout: float = 0.0,
         monomial_chunk_size: int | None = None,
     ) -> None:
         super().__init__()
@@ -43,9 +45,11 @@ class ConvGhonn(nn.Module):
             gate_orders=gate_orders,
             predictor_activations=predictor_activations,
             gate_activations=gate_activations,
+            force_gate_output_one=force_gate_output_one,
             bias=bias,
             weight_init_mode=weight_init_mode,
             weight_divisor=weight_divisor,
+            poly_dropout=poly_dropout,
             monomial_chunk_size=monomial_chunk_size,
         )
 
@@ -62,7 +66,5 @@ class ConvGhonn(nn.Module):
         else:
             x = functional.pad(x, (0, 0, self.lookback, 0), mode=self.padding_mode)
         windows = x.unfold(1, self.lookback + 1, 1)
-        windows = windows.permute(0, 1, 3, 2).reshape(
-            x.size(0), -1, self.in_features * (self.lookback + 1)
-        )
+        windows = windows.contiguous().view(x.size(0), -1, self.in_features * (self.lookback + 1))
         return self.bank(windows)

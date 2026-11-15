@@ -29,6 +29,7 @@ class HONU(nn.Module):
         activation: str = "identity",
         weight_init_mode: str = "random",
         weight_divisor: float = 100.0,
+        poly_dropout: float = 0.0,
         monomial_chunk_size: int | None = None,
     ) -> None:
         """Initialize a vectorized polynomial neural unit.
@@ -54,6 +55,8 @@ class HONU(nn.Module):
             raise ValueError("weight_divisor must be greater than zero.")
         if monomial_chunk_size is not None and monomial_chunk_size <= 0:
             raise ValueError("monomial_chunk_size must be positive or None.")
+        if not 0 <= poly_dropout < 1:
+            raise ValueError("poly_dropout must be in [0, 1).")
 
         self.in_features = in_features
         self.order = order
@@ -62,6 +65,7 @@ class HONU(nn.Module):
         self.activation = activation.lower()
         self.weight_init_mode = weight_init_mode
         self.weight_divisor = float(weight_divisor)
+        self.poly_dropout = nn.Dropout(poly_dropout)
         self.monomial_chunk_size = monomial_chunk_size
 
         combinations = torch.tensor(
@@ -107,27 +111,12 @@ class HONU(nn.Module):
         ):
             raise ValueError(f"Unknown activation function: {self.activation}")
 
-    def _polynomial_features(self, x: Tensor) -> Tensor:
-        """Build the monomial feature matrix for ``x``."""
-        if self.bias:
-            x = torch.cat((torch.ones_like(x[..., :1]), x), dim=-1)
-        flat_x = x.reshape(-1, x.size(-1))
-        chunks = (
-            ((0, self.num_combinations),)
-            if self.monomial_chunk_size is None
-            else (
-                (start, min(start + self.monomial_chunk_size, self.num_combinations))
-                for start in range(0, self.num_combinations, self.monomial_chunk_size)
-            )
-        )
-        features = []
-        for start, end in chunks:
-            indices = self.comb_idx[start:end]
-            monomials = flat_x[:, indices[:, 0]].clone()
-            for index in indices[:, 1:].unbind(dim=1):
-                monomials.mul_(flat_x[:, index])
-            features.append(monomials)
-        return torch.cat(features, dim=-1).reshape(*x.shape[:-1], self.num_combinations)
+    def _iter_monomial_chunks(self):
+        """Yield monomial-index slices without retaining prior chunks."""
+        chunk_size = self.monomial_chunk_size or self.num_combinations
+        for start in range(0, self.num_combinations, chunk_size):
+            end = min(start + chunk_size, self.num_combinations)
+            yield start, end, self.comb_idx[start:end]
 
     def forward(self, x: Tensor) -> Tensor:
         """Return polynomial outputs with shape ``(*x.shape[:-1], out_features)``."""
@@ -137,11 +126,19 @@ class HONU(nn.Module):
             raise ValueError(
                 f"Input shape mismatch: expected {self.in_features} features, got {x.size(-1)}."
             )
-        features = self._polynomial_features(x)
-        output = features @ self.weight
+        if self.bias:
+            x = torch.cat((torch.ones_like(x[..., :1]), x), dim=-1)
+        flat_x = x.reshape(-1, x.size(-1))
+        output = flat_x.new_zeros(flat_x.size(0), self.out_features)
+        for start, end, indices in self._iter_monomial_chunks():
+            monomials = flat_x[:, indices[:, 0]].clone()
+            for index in indices[:, 1:].unbind(dim=1):
+                monomials.mul_(flat_x[:, index])
+            monomials = self.poly_dropout(monomials)
+            output = output + monomials @ self.weight[start:end]
         if self.activation not in {"identity", "linear"}:
             output = getattr(functional, self.activation)(output)
-        return output
+        return output.reshape(*x.shape[:-1], self.out_features)
 
     def extra_repr(self) -> str:
         """Describe the unit in the standard ``nn.Module`` representation."""

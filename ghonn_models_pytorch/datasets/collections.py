@@ -12,6 +12,11 @@ def air_passenger() -> str:
     return "https://raw.githubusercontent.com/facebookresearch/Kats/refs/heads/main/kats/data/air_passengers.csv"  # pylint: disable=line-too-long
 
 
+def etth1() -> str:
+    """Return the URL for the ETTh1 electricity transformer dataset."""
+    return "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"  # pylint: disable=line-too-long
+
+
 if __name__ == "__main__":
     from pathlib import Path
 

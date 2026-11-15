@@ -2,18 +2,30 @@
 
 __version__ = "0.2.0"
 
-from .core import ConvGhonn, GhonuBank, GHONN, GHONU, HonuBank, HONN, HONU, RevIN, SAGHONN
+from .core import (
+    GHONN,
+    GHONU,
+    HONN,
+    HONU,
+    SAGHONN,
+    ConvGhonn,
+    ConvGhonn1D,
+    GhonuBank,
+    HonuBank,
+    RevIN,
+)
 from .datasets import load_example_dataset
 
 __all__ = [
-    "ConvGhonn",
-    "GhonuBank",
-    "HonuBank",
     "GHONN",
     "GHONU",
     "HONN",
     "HONU",
-    "RevIN",
     "SAGHONN",
+    "ConvGhonn",
+    "ConvGhonn1D",
+    "GhonuBank",
+    "HonuBank",
+    "RevIN",
     "load_example_dataset",
 ]

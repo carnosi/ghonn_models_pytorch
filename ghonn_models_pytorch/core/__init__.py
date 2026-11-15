@@ -1,6 +1,7 @@
 """Core modules for elementary neurons and layers."""
 
 from .banks import GhonuBank, HonuBank
+from .conv_ghonn_1d import ConvGhonn1D
 from .convghonn import ConvGhonn
 from .ghonn import GHONN
 from .ghonu import GHONU
@@ -10,13 +11,14 @@ from .revin import RevIN
 from .saghonn import SAGHONN
 
 __all__ = [
-    "ConvGhonn",
-    "GhonuBank",
-    "HonuBank",
     "GHONN",
     "GHONU",
     "HONN",
     "HONU",
-    "RevIN",
     "SAGHONN",
+    "ConvGhonn",
+    "ConvGhonn1D",
+    "GhonuBank",
+    "HonuBank",
+    "RevIN",
 ]

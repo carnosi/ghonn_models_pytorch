@@ -29,6 +29,9 @@ dist/
 
 # Local files
 local/
+.serena/
+.tokensave/
+.ruff_cache/
 
 # UV
 uv.lock

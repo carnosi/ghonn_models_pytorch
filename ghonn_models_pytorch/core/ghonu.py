@@ -26,9 +26,11 @@ class GHONU(nn.Module):
         gate_order: int = 1,
         predictor_activation: str = "identity",
         gate_activation: str = "sigmoid",
+        force_gate_output_one: bool = False,
         bias: bool = True,
         weight_init_mode: str = "random",
         weight_divisor: float = 100.0,
+        poly_dropout: float = 0.0,
         monomial_chunk_size: int | None = None,
     ) -> None:
         """Initialize a gated polynomial neural unit.
@@ -52,6 +54,7 @@ class GHONU(nn.Module):
         self.out_features = out_features
         self.predictor_order = predictor_order
         self.gate_order = gate_order
+        self.force_gate_output_one = force_gate_output_one
         self.predictor = HONU(
             in_features,
             predictor_order,
@@ -60,6 +63,7 @@ class GHONU(nn.Module):
             activation=predictor_activation,
             weight_init_mode=weight_init_mode,
             weight_divisor=weight_divisor,
+            poly_dropout=poly_dropout,
             monomial_chunk_size=monomial_chunk_size,
         )
         self.gate = (
@@ -71,9 +75,10 @@ class GHONU(nn.Module):
                 activation=gate_activation,
                 weight_init_mode=weight_init_mode,
                 weight_divisor=weight_divisor,
+                poly_dropout=poly_dropout,
                 monomial_chunk_size=monomial_chunk_size,
             )
-            if gate_order > 0
+            if gate_order > 0 and not force_gate_output_one
             else None
         )
 

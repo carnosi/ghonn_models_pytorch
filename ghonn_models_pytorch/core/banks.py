@@ -13,7 +13,13 @@ from .honu import HONU
 
 
 def _as_tuple(value: int | str | tuple, name: str) -> tuple:
-    values = value if isinstance(value, tuple) else (value,) if isinstance(value, (int, str)) else tuple(value)
+    values = (
+        value
+        if isinstance(value, tuple)
+        else (value,)
+        if isinstance(value, (int, str))
+        else tuple(value)
+    )
     if not values:
         raise ValueError(f"{name} must not be empty.")
     return values
@@ -44,6 +50,7 @@ class HonuBank(nn.Module):
         bias: bool = True,
         weight_init_mode: str = "random",
         weight_divisor: float = 100.0,
+        poly_dropout: float = 0.0,
         monomial_chunk_size: int | None = None,
     ) -> None:
         super().__init__()
@@ -64,6 +71,7 @@ class HonuBank(nn.Module):
                     activation=activation,
                     weight_init_mode=weight_init_mode,
                     weight_divisor=weight_divisor,
+                    poly_dropout=poly_dropout,
                     monomial_chunk_size=monomial_chunk_size,
                 )
             )
@@ -72,9 +80,15 @@ class HonuBank(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         shape = x.shape
         flat_x = x.reshape(-1, shape[-1])
-        output = flat_x.new_empty(flat_x.size(0), self.out_features)
+        output = None
         for indices, group in zip(self.indices, self.groups, strict=True):
-            output[:, indices] = group(flat_x)
+            group_output = group(flat_x)
+            if output is None:
+                output = group_output.new_empty(flat_x.size(0), self.out_features)
+            output[:, indices] = group_output.to(output)
+        if output is None:
+            msg = "HonuBank requires at least one group."
+            raise RuntimeError(msg)
         return output.reshape(*shape[:-1], self.out_features)
 
 
@@ -90,9 +104,11 @@ class GhonuBank(nn.Module):
         gate_orders: int | tuple[int, ...] = (1,),
         predictor_activations: str | tuple[str, ...] = ("identity",),
         gate_activations: str | tuple[str, ...] = ("sigmoid",),
+        force_gate_output_one: bool = False,
         bias: bool = True,
         weight_init_mode: str = "random",
         weight_divisor: float = 100.0,
+        poly_dropout: float = 0.0,
         monomial_chunk_size: int | None = None,
     ) -> None:
         super().__init__()
@@ -120,9 +136,11 @@ class GhonuBank(nn.Module):
                     gate_order=gate_order,
                     predictor_activation=predictor_activation,
                     gate_activation=gate_activation,
+                    force_gate_output_one=force_gate_output_one,
                     bias=bias,
                     weight_init_mode=weight_init_mode,
                     weight_divisor=weight_divisor,
+                    poly_dropout=poly_dropout,
                     monomial_chunk_size=monomial_chunk_size,
                 )
             )
@@ -136,14 +154,19 @@ class GhonuBank(nn.Module):
         """Return bank output plus predictor and gate outputs."""
         shape = x.shape
         flat_x = x.reshape(-1, shape[-1])
-        outputs = flat_x.new_empty(flat_x.size(0), self.out_features)
-        predictors = flat_x.new_empty(flat_x.size(0), self.out_features)
-        gates = flat_x.new_empty(flat_x.size(0), self.out_features)
+        outputs = predictors = gates = None
         for indices, group in zip(self.indices, self.groups, strict=True):
             group_output, group_predictor, group_gate = group.forward_with_elements(flat_x)
-            outputs[:, indices] = group_output
-            predictors[:, indices] = group_predictor
-            gates[:, indices] = group_gate
+            if outputs is None:
+                outputs = group_output.new_empty(flat_x.size(0), self.out_features)
+                predictors = group_predictor.new_empty(flat_x.size(0), self.out_features)
+                gates = group_gate.new_empty(flat_x.size(0), self.out_features)
+            outputs[:, indices] = group_output.to(outputs)
+            predictors[:, indices] = group_predictor.to(predictors)
+            gates[:, indices] = group_gate.to(gates)
+        if outputs is None or predictors is None or gates is None:
+            msg = "GhonuBank requires at least one group."
+            raise RuntimeError(msg)
         new_shape = (*shape[:-1], self.out_features)
         return (
             outputs.reshape(new_shape),

@@ -18,7 +18,7 @@
 
 🔗 **Gated variants for extra power:** The gated architectures use a dual HONU neuron setup—one as a dynamic gate, the other as the main predictor—enabling richer and more expressive modeling.
 
-🧠 **Full forecasting network:** SA-GHONN normalizes the input (optionally with RevIN), maps each timestep through a HONU/GHONU embedding, adds positional encoding, and passes the sequence through a Transformer encoder with self-attention. Its forecast head is configurable: `flat` uses a linear projection of the full encoded sequence, `pool` mean-pools the sequence and applies an MLP, and `query` uses learned forecast queries with cross-attention over the self-attended sequence before a final linear projection. Thus, self-attention is always used, while cross-attention is specific to the `query` head.
+🧠 **Full forecasting network:** SA-GHONN normalizes the input (optionally with RevIN), decomposes it into trend, seasonal, and residual signals, processes them with linear, Conv-GHONU, and GHONU experts, then mixes the stacked branches with self-attention before a delta-MLP forecast decoder.
 
 🛠️ **Modular and flexible:** Build your own architectures with ease. Layers can be stacked directly or connected via linear mappings, giving you full control over your network’s structure.
 
@@ -60,9 +60,9 @@ Visit [Read The Docs Project Page](https://gmp.readthedocs.io/) or read the foll
 - **gHONN:** Single-layer networks of gHONU neurons, with the same flexible output options as HONN.
 
 **Full Models and Components** 🧠
-- **SA-GHONN:** Self-attention Gated Higher-Order Neural Network forecaster. The pipeline is `RevIN` (optional) -> HONU/GHONU embedding (`GhonuBank` or temporal `ConvGhonn`) -> positional encoding -> Transformer encoder self-attention -> forecast head. The `flat` head uses a linear projection, the `pool` head uses mean pooling followed by an MLP, and the `query` head uses learned forecast queries to cross-attend to the self-attended sequence before a linear projection.
+- **SA-GHONN:** Self-attention Gated Higher-Order Neural Network forecaster. The pipeline is `RevIN` (optional) -> trend/seasonal/residual moving-average decomposition -> linear GHONU, Conv-GHONU, and GHONU experts -> branch-stack self-attention -> delta-MLP forecast decoder.
 - **`HonuBank` and `GhonuBank`:** Grouped, vectorized banks of HONU and GHONU neurons.
-- **`ConvGhonn` (Conv-GHONN):** Applies GHONU polynomial filters to causal temporal windows and can be used directly or as the SA-GHONN embedding when `temporal_lookback` is greater than zero.
+- **`ConvGhonn` (Conv-GHONN):** Applies GHONU polynomial filters to causal temporal windows. `ConvGhonn1D` applies independent polynomial filters per temporal input feature.
 - **`RevIN`:** Reversible instance normalization for non-stationary time series.
 
 **Why Choose GHONN Models?** 🚀
@@ -150,12 +150,10 @@ forecast = sa_ghonn(sequence)
 # forecast.shape == (8, 12, 1)
 ```
 
-SA-GHONN uses a GHONU bank as its default sequence embedding. It then adds
-positional encoding, processes the sequence with a Transformer encoder, and
-applies the selected forecasting head. Set `temporal_lookback` to use a temporal
-`ConvGhonn` embedding, or set `head_type="query"` to use learned forecast
-queries with cross-attention. Use `predicted_feature_indices` and
-`aux_all_features` when forecasting multiple input features.
+SA-GHONN defaults to the trial-0896 ETTh1 96-step profile: a 96-step
+trend decomposition, 96-wide linear and temporal GHONU branches with a
+16-kernel, 9-step Conv-GHONU seasonal branch, and one eight-head attention
+layers before a delta-MLP decoder.
 * In the case of GHONU based units it is often benefitial to have different initial learning rate between the two neurons.
 * more TBD
 
